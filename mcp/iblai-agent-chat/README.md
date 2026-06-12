@@ -1,21 +1,21 @@
 # iblai-agent-chat
 
-MCP (Model Context Protocol) server for IBL.ai mentor chat interactions, enabling AI assistants to communicate with configured AI mentors.
+MCP (Model Context Protocol) server for ibl.ai mentor chat interactions, enabling AI assistants to communicate with configured AI mentors.
 
-**Base URL:** `https://asgi.data.iblai.app` (or your IBL.ai deployment)
+**Base URL:** `https://asgi.data.iblai.app` (or your ibl.ai deployment)
 
 **Type:** Hosted (no local installation required)
 
 ## Overview
 
-The iblai-agent-chat server provides a bridge between MCP-compatible AI assistants (like Claude) and IBL.ai's mentor system. This allows users to interact with specialized AI mentors configured for specific domains, courses, or purposes through their preferred AI assistant interface.
+The iblai-agent-chat server provides a bridge between MCP-compatible AI assistants (like Claude) and ibl.ai's mentor system. This allows users to interact with specialized AI mentors configured for specific domains, courses, or purposes through their preferred AI assistant interface.
 
 ## Configuration
 
 ### Authentication
 
 The server uses Api-Token authentication via the `Authorization` header, plus a mentor identifier. You need:
-1. A Platform API Key from your IBL.ai admin panel
+1. A Platform API Key from your ibl.ai admin panel
 2. The mentor's unique ID via the `X-Mentor-Unique-Id` header
 
 ### Required Headers
@@ -79,14 +79,14 @@ Response: "Machine learning encompasses several key concepts..."
 
 ## How It Works
 
-1. **Authentication**: The server validates the user's Bearer token against IBL.ai's authentication system
+1. **Authentication**: The server validates the user's Bearer token against ibl.ai's authentication system
 2. **Mentor Resolution**: The `X-Mentor-Unique-Id` header identifies which mentor to route the conversation to
-3. **LLM Invocation**: The prompt is processed through IBL.ai's LLM service with the mentor's configured context, system prompts, and knowledge base
+3. **LLM Invocation**: The prompt is processed through ibl.ai's LLM service with the mentor's configured context, system prompts, and knowledge base
 4. **Response**: The mentor's response is returned through the MCP tool
 
 ## Mentor Configuration
 
-Mentors in IBL.ai can be configured with:
+Mentors in ibl.ai can be configured with:
 - **System prompts**: Define the mentor's personality and behavior
 - **Knowledge bases**: Connect documents, courses, or custom data
 - **LLM models**: Choose the underlying language model
@@ -144,7 +144,7 @@ Configure multiple mentor connections for different tasks:
 
 To find a mentor's unique ID:
 
-1. **Via IBL.ai Dashboard**: Navigate to Mentors → Select Mentor → Copy the Unique ID from settings
+1. **Via ibl.ai Dashboard**: Navigate to Mentors → Select Mentor → Copy the Unique ID from settings
 2. **Via API**: Use the mentor list endpoint: `GET /api/ai-mentor/orgs/{org}/users/{user_id}/mentors/`
 3. **Via iblai-search**: Use the mentor search tools to discover mentors and their IDs
 
@@ -171,7 +171,7 @@ The mentor chat service may be subject to rate limiting based on:
 - Organization quotas
 - LLM provider limits
 
-Check with your IBL.ai administrator for specific limits.
+Check with your ibl.ai administrator for specific limits.
 
 ## Related MCP Servers
 
@@ -183,5 +183,5 @@ Check with your IBL.ai administrator for specific limits.
 
 ## License
 
-Proprietary - IBL.ai
+MIT — ibl.ai
 
