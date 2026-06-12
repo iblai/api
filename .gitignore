@@ -155,3 +155,4 @@ Thumbs.db
 # Project specific
 *.har
 *.log
+.claude/settings.local.json
