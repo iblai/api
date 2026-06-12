@@ -7,10 +7,12 @@
 Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 
 [![Skills](https://img.shields.io/badge/Skills-33-CC785C)](https://skills.sh/iblai/api)
-[![Works with 15+ agents](https://img.shields.io/badge/Works_with-15%2B_agents-1f6feb)](https://skills.sh)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-CC785C?logoColor=white)](https://claude.ai)
+[![Cursor](https://img.shields.io/badge/Cursor-000000)](https://cursor.com)
+[![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
 [![MCP](https://img.shields.io/badge/MCP-Model_Context_Protocol-1f6feb)](https://modelcontextprotocol.io)
 [![ibl.ai](https://img.shields.io/badge/ibl.ai-platform-000000)](https://ibl.ai)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
 
@@ -207,4 +209,4 @@ The `/iblai-login` skill walks through all of this and writes `IBLAI_ORG`, `IBLA
 
 ## License
 
-ibl.ai — [ibl.ai](https://ibl.ai)
+MIT — see [LICENSE](LICENSE). © [ibl.ai](https://ibl.ai)
