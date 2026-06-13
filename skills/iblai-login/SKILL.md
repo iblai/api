@@ -81,13 +81,15 @@ The base URL is fixed: `https://api.iblai.app`. Auth header on every request is
 
    - **With browser automation (recommended):** once the user is signed in on
      `login.iblai.app/me`, the page's session carries a short-lived auth token —
-     read **`dm_token`** from that site's `localStorage`. Use it as a Bearer token
-     to create a Platform API Token (the same `POST …/platform/api-tokens/` call
-     documented in **`/iblai-tokens`**):
+     read **`dm_token`** from that site's `localStorage`. Use it with the
+     **`Token`** auth scheme (**not** `Bearer` — `Bearer` returns `401
+     Authentication credentials were not provided`) to create a Platform API
+     Token (the same `POST …/platform/api-tokens/` call documented in
+     **`/iblai-tokens`**):
 
      ```http
      POST https://api.iblai.app/dm/api/core/platform/api-tokens/
-     Authorization: Bearer <dm_token from login.iblai.app localStorage>
+     Authorization: Token <dm_token from login.iblai.app localStorage>
      Content-Type: application/json
 
      { "username": "<username>", "name": "iblai-cli", "key": "",
@@ -95,6 +97,29 @@ The base URL is fixed: `https://api.iblai.app`. Auth header on every request is
      ```
 
      Capture the returned secret (shown once) → `IBLAI_API_KEY`.
+
+     > **Token uniqueness:** `(platform_key, name)` must be unique. Re-running
+     > with the same `name` for an org returns `400 … must make a unique set`.
+     > Use a fresh `name` (e.g. `iblai-cli-<org>`) or reuse the existing token.
+
+     > **Which tenant the token targets.** The **`platform_key` in the request
+     > body** is what scopes the resulting token — an admin's `dm_token` can mint
+     > a token for any org they administer, regardless of which tenant the
+     > browser session is currently "in". The `dm_token` itself, however, **is
+     > tenant-scoped**: switching the active tenant rotates it. So if minting
+     > fails with a `401`/`403` (the session lacks rights on the target org),
+     > switch the active tenant first, then re-read `dm_token` and retry:
+     > open **os.ibl.ai**, use the **org dropdown at the top-right**, scroll to
+     > the target tenant and select it (the URL becomes
+     > `os.ibl.ai/platform/<org>/…`), then read the refreshed `dm_token` from
+     > that page's `localStorage`.
+
+     > **Verifying the minted token.** Do **not** verify an `Api-Token` against
+     > the `…/platform/api-tokens/` management endpoint — that endpoint only
+     > accepts the session `Token <dm_token>` scheme and returns `401` for *any*
+     > `Api-Token`, valid or not. Verify against a real data endpoint instead,
+     > e.g. `GET …/platform/users/?platform_key=<org>&platform_org=<org>` with
+     > `Authorization: Api-Token <key>` → `200`.
 
    - **Without a browser:** have the user create a token in the platform admin
      (or at `login.iblai.app`) and paste the secret. You can recommend they
@@ -123,15 +148,19 @@ The base URL is fixed: `https://api.iblai.app`. Auth header on every request is
 
 5. **Verify the connection.**
 
-   Confirm the token resolves the org:
+   Confirm the token authenticates against a real data endpoint. Do **not** use
+   the `…/platform/api-tokens/` management endpoint here — it only accepts the
+   session `Token <dm_token>` scheme and returns `401` for *any* `Api-Token`,
+   so it cannot confirm a minted token works:
 
    ```bash
-   curl -s "https://api.iblai.app/dm/api/core/platform/api-tokens/?platform_key=$IBLAI_ORG" \
-     -H "Authorization: Api-Token $IBLAI_API_KEY" | head
+   curl -s -o /dev/null -w '%{http_code}\n' \
+     "https://api.iblai.app/dm/api/core/platform/users/?platform_key=$IBLAI_ORG&platform_org=$IBLAI_ORG&page=1&page_size=1" \
+     -H "Authorization: Api-Token $IBLAI_API_KEY"
    ```
 
-   A `200` with the token list means you are connected. Report the active org and
-   username back to the user.
+   A `200` means you are connected. Report the active org and username back to the
+   user.
 
 ## Notes
 
