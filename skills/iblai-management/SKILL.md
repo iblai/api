@@ -21,11 +21,45 @@ administration.
 - Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
-## Reads & Writes
+## Reads
 
 ### Users
 
 - **GET** `…/core/platform/users/?platform_key={org}&platform_org={org}&query={q}&page={n}&page_size=10&return_policies=true` — user list + policies.
+
+### Groups
+
+`…/core/rbac/groups/`
+
+- **GET** `…/groups/?platform_key={org}&include_users=true[&name=&email=&owner=&username=&page=&page_size=]` — list.
+- **GET** `…/groups/{id}/` — detail.
+
+### Roles
+
+`…/core/rbac/roles/` (all calls include `include_global_roles=true`)
+
+- **GET** `…/roles/?include_global_roles=true&platform_key={org}[&name=&page=&page_size=]` — list.
+- **GET** `…/roles/{id}/?include_global_roles=true&platform_key={org}` — detail.
+
+### Policies
+
+`…/core/rbac/policies/`
+
+- **GET** `…/policies/?platform_key={org}&include_groups=true&include_users=true[&role_id=&group=&name=&username=&email=&page=&page_size=]` — list.
+- **GET** `…/policies/{id}/?platform_key={org}` — detail.
+
+### Teams
+
+`…/core/user-groups/` plus team access (`…/core/rbac/teams/access/`)
+
+- **GET** `…/user-groups/?platform_key={org}[&include_users=&name=&with_permissions=&page=&page_size=]` — list.
+- **GET** `…/user-groups/{id}/?platform_key={org}` — detail.
+- **GET** `…/core/rbac/teams/access/?platform_key={org}&usergroup_id={id}` — list a team's access policies.
+
+## Writes
+
+### Users
+
 - **POST** `https://learn.iblai.app/api/ibl/users/manage/roles/` — promote/demote (LMS):
   ```json
   {
@@ -58,8 +92,6 @@ administration.
 
 `…/core/rbac/groups/`
 
-- **GET** `…/groups/?platform_key={org}&include_users=true[&name=&email=&owner=&username=&page=&page_size=]` — list.
-- **GET** `…/groups/{id}/` — detail.
 - **POST** `…/groups/` — create:
   ```json
   {
@@ -76,8 +108,6 @@ administration.
 
 `…/core/rbac/roles/` (all calls include `include_global_roles=true`)
 
-- **GET** `…/roles/?include_global_roles=true&platform_key={org}[&name=&page=&page_size=]` — list.
-- **GET** `…/roles/{id}/?include_global_roles=true&platform_key={org}` — detail.
 - **POST** `…/roles/?include_global_roles=true` — create:
   ```json
   {
@@ -94,8 +124,6 @@ administration.
 
 `…/core/rbac/policies/`
 
-- **GET** `…/policies/?platform_key={org}&include_groups=true&include_users=true[&role_id=&group=&name=&username=&email=&page=&page_size=]` — list.
-- **GET** `…/policies/{id}/?platform_key={org}` — detail.
 - **POST** `…/policies/` — create:
   ```json
   {
@@ -114,8 +142,6 @@ administration.
 
 `…/core/user-groups/` plus team access (`…/core/rbac/teams/access/`)
 
-- **GET** `…/user-groups/?platform_key={org}[&include_users=&name=&with_permissions=&page=&page_size=]` — list.
-- **GET** `…/user-groups/{id}/?platform_key={org}` — detail.
 - **POST** `…/user-groups/` — create:
   ```json
   {
@@ -127,7 +153,6 @@ administration.
   ```
 - **PUT** `…/user-groups/{id}/` — update (same shape).
 - **DELETE** `…/user-groups/{id}/` — delete. Destructive — confirm with the user first.
-- **GET** `…/core/rbac/teams/access/?platform_key={org}&usergroup_id={id}` — list a team's access policies.
 - **POST** `…/core/rbac/teams/access/` — set team access:
   ```json
   {
