@@ -30,19 +30,21 @@ Reads are read-only; the only writes are Data Reports.
   (plus `&mentor_unique_id={mentor}` when scoping to an agent) is implied as `&…`.
 - Not connected yet? Run **`/iblai-login`** first.
 
-## Reads — Overview / Users / Topics / Transcripts / Costs
+## Reads
+
+### Overview / Users / Topics / Transcripts / Costs
 
 These endpoints serve both **agent** scope and **organization-wide** scope;
 include `mentor_unique_id` for the former, omit it for the latter.
 
-### Overview
+#### Overview
 
 - **GET** `…/analytics/topics/?date_filter=30d&…` — Messages / Topics / Conversations KPIs.
 - **GET** `…/analytics/users/?metric=active_users_last_30d&date_filter=30d&…` — Active Users KPI.
 - **GET** `…/analytics/sessions/?date_filter={r}&…` — Sessions line chart.
 - **GET** `…/analytics/topics/details/?date_filter={r}&…` — Topics bar chart.
 
-### Users
+#### Users
 
 - **GET** `…/analytics/users/?metric=registered_users&date_filter=30d&…`
 - **GET** `…/analytics/users/?metric=active_users&date_filter={r}&…`
@@ -50,20 +52,20 @@ include `mentor_unique_id` for the former, omit it for the latter.
 - **GET** `…/analytics/time/?date_filter={r}&…` — access-time heatmap.
 - **GET** `…/analytics/users/details/?date_filter={r}&page={n}&limit=5&search={q}&…` — user table.
 
-### Topics
+#### Topics
 
 - **GET** `…/analytics/conversations?metric=conversations&date_filter={r}&…`
 - **GET** `…/analytics/topics/?date_filter=30d&…`
 - **GET** `…/analytics/ratings/?date_filter={r}&…`
 - **GET** `…/analytics/topics/details/?date_filter={r}&…`
 
-### Transcripts
+#### Transcripts
 
 - **GET** `…/analytics/conversations?metric=headline&…`
 - **GET** `…/analytics/messages/?search={user}&topic={topic}&page={n}&limit=20&…` — transcript list.
 - **GET** `…/analytics/messages/details/?session_id={id}&…` — one transcript.
 
-### Costs
+#### Costs
 
 - **GET** `…/analytics/financial/?metric=weekly_costs&date_filter=all_time&…`
 - **GET** `…/analytics/financial/?metric=monthly_costs&date_filter=all_time&…`
@@ -73,7 +75,7 @@ include `mentor_unique_id` for the former, omit it for the latter.
 - **GET** `…/analytics/financial/details/?metrics=total_costs,sessions&group_by=username&date_filter={r}&page={n}&limit={l}&search={q}&…`
 - **GET** `…/analytics/financial/details/?metric=total_costs&group_by=llm_model&date_filter={r}&…`
 
-## Reads — Content (Courses & Programs)
+### Content (Courses & Programs)
 
 Course-level and program-level analytics are org-wide catalog breakdowns
 (no `mentor_unique_id`) on the same `…/dm/api/analytics/…` family, keyed
@@ -82,7 +84,7 @@ by course/program — analogous to the `details` grouping used by Costs (e.g.
 the `…/analytics/…/details/` endpoints grouped by course/program, or capture the
 precise sub-path from the live API responses.
 
-## Reads — User analytics
+### User analytics
 
 A single user's own learning data (enrollments, grades, time spent, engagement,
 last access). RBAC-gated (`IsPlatformAdminOfUser | IsSelfAccess`).
@@ -93,16 +95,23 @@ last access). RBAC-gated (`IsPlatformAdminOfUser | IsSelfAccess`).
 (`…/analytics/learners/` and `…/analytics/learner/details` keep the platform's
 wire spelling.)
 
-## Audit
+### Audit
 
 - **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/mentors/audit-logs/?limit=20&offset={n}&mentor={mentor}[&action=0|1|2&actor_email=&from_date=&to_date=]`
 
-## Writes (Data Reports)
+### Data Reports
 
 Data Reports (`…/reports`) are the only writes: kick off a report, poll until
 complete, then download the finished CSV from the presigned URL.
 
 - **GET** `…/reports/platforms/{org}/?mentor_id={mentorDbId}` — list reports + status.
+- **GET** `…/reports/platforms/{org}/{report_name}?mentor_unique_id={mentor}` — poll status until complete.
+- **GET** `{status.url}` — download the finished CSV.
+
+## Writes
+
+### Data Reports
+
 - **POST** `…/reports/platforms/{org}/new` — generate a report:
   ```json
   {
@@ -115,8 +124,6 @@ complete, then download the finished CSV from the presigned URL.
     "query": "string"
   }
   ```
-- **GET** `…/reports/platforms/{org}/{report_name}?mentor_unique_id={mentor}` — poll status until complete.
-- **GET** `{status.url}` — download the finished CSV.
 
 ## Example
 

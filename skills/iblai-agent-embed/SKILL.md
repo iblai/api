@@ -29,6 +29,10 @@ Use when embedding an agent on an external website.
 - **GET** `…/mentors/{mentor}/sharable-link` — existing share-link token (404 = none).
 - **GET** `https://learn.iblai.app/ibl-auth/get-provider-slug/?platform_key={org}&username={username}` — SSO providers (LMS host).
 
+### Backend token provisioning
+
+- **GET** `https://api.iblai.app/dm/api/core/users/platforms/` — fetch the user's organization/platform record.
+
 ## Writes
 
 - **PUT** `…/mentors/{mentor}/settings/` — save embed settings (`multipart/form-data`, send only changed keys):
@@ -68,7 +72,7 @@ Use when embedding an agent on an external website.
   }
   ```
 
-## Backend token provisioning (server-to-server embed auth)
+### Backend token provisioning (server-to-server embed auth)
 
 Skip the SSO login popup by minting the user's tokens from your own backend, then
 handing the embed the same `ibl-data` blob the Auth SPA would have produced. All
@@ -76,7 +80,6 @@ calls are **server-to-server** with the org's Platform API Token — never expos
 this in browser JS.
 
 - **POST** `https://api.iblai.app/dm/api/core/consolidated-token/provision/` — resolve-or-create the user and mint `dm_token` + `axd_token`.
-- **GET** `https://api.iblai.app/dm/api/core/users/platforms/` — fetch the user's organization/platform record.
 - Assemble those into the `ibl-data` payload and pass it to the iframe.
 
 Gated per-org by the ibl.ai-managed flag `ENABLE_PLATFORM_CONSOLIDATED_PROXY_PROVISIONING`

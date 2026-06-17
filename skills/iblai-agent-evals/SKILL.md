@@ -22,15 +22,31 @@ agent against a dataset and grade the results.
 - Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
-## Datasets
+## Reads
+
+### Datasets
 
 - **GET** `https://api.iblai.app/dm/api/ai-agent/orgs/{org}/users/{username}/evaluations/datasets/` — list.
-- **POST** `…/evaluations/datasets/` — create.
 - **GET** `…/evaluations/datasets/{dataset_name}/` — get one.
 
-## Dataset items
+### Dataset items
 
 - **GET** `…/datasets/{dataset_name}/items/` — list items.
+
+### Experiments (runs)
+
+- **GET** `…/datasets/{dataset_name}/runs/` — list runs.
+- **GET** `…/datasets/{dataset_name}/runs/{run_name}/` — run details.
+- **GET** `…/datasets/{dataset_name}/runs/{run_name}/export/` — export results as CSV.
+
+## Writes
+
+### Datasets
+
+- **POST** `…/evaluations/datasets/` — create.
+
+### Dataset items
+
 - **POST** `…/datasets/{dataset_name}/items/` — add items (direct JSON, or link
   from existing chat traces — the system extracts input + agent response from
   each trace).
@@ -38,15 +54,12 @@ agent against a dataset and grade the results.
 - **PUT** `…/datasets/{dataset_name}/items/{item_id}/` — update an item.
 - **DELETE** `…/datasets/{dataset_name}/items/{item_id}/` — delete an item. Destructive — confirm with the user first.
 
-## Experiments (runs)
+### Experiments (runs)
 
-- **GET** `…/datasets/{dataset_name}/runs/` — list runs.
 - **POST** `…/datasets/{dataset_name}/runs/` — start an experiment (async background task; sends each question to the agent, records responses).
-- **GET** `…/datasets/{dataset_name}/runs/{run_name}/` — run details.
-- **GET** `…/datasets/{dataset_name}/runs/{run_name}/export/` — export results as CSV.
 - **DELETE** `…/datasets/{dataset_name}/runs/{run_name}/` — delete a run. Destructive — confirm with the user first.
 
-## Grading
+### Grading
 
 - **POST** `…/datasets/{dataset_name}/runs/{run_name}/evaluate/` — **LLM-as-Judge**: grade a whole run against custom criteria (score 0–1).
 - **GET** `…/evaluations/scores/` ; **POST** `…/evaluations/scores/` ; **DELETE** `…/evaluations/scores/{score_id}/` — human/numeric/boolean/categorical scores. Deletion is destructive — confirm with the user first.

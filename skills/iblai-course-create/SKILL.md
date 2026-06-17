@@ -21,25 +21,35 @@ content. Host root for every endpoint below is
 - Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
-## Tasks
+## Reads
 
-- **POST** `…/course-creation/tasks/` — create a task.
+### Tasks
+
 - **GET** `…/course-creation/tasks/` — list tasks.
 - **GET** `…/course-creation/tasks/{task_id}/` — task detail / status (status flows `Pending` → `Scheduled`).
-- **DELETE** `…/course-creation/tasks/{task_id}/` — delete a task. Destructive — confirm with the user first.
-- **POST** `…/course-creation/tasks/{task_id}/create-course/` — create the course on the LMS.
-- **POST** `…/course-creation/tasks/{task_id}/create-course-outline/` — generate the outline with AI.
 - **GET** `…/course-creation/tasks/{task_id}/start/` — start the full creation pipeline.
 - **GET** `…/course-creation/tasks/{task_id}/cancel/` — cancel the pipeline.
 
-## Courses
+### Courses
 
 - **GET** `…/course-creation/course/` — list courses (filter by task with `?task={task_id}`).
 - **GET** `…/course-creation/course/{course_id}/` — course detail.
-- **DELETE** `…/course-creation/course/{course_id}/` — delete the course record. Destructive — confirm with the user first.
 - **GET** `…/course-creation/course/{course_id}/outline/` — outline (no component content).
 - **GET** `…/course-creation/course/{course_id}/full-structure/` — full structure (add `?include_content=true` for HTML).
 - **GET** `…/course-creation/course/{course_id}/draft-content-for-all-units/` — draft content for all units.
+
+## Writes
+
+### Tasks
+
+- **POST** `…/course-creation/tasks/` — create a task.
+- **DELETE** `…/course-creation/tasks/{task_id}/` — delete a task. Destructive — confirm with the user first.
+- **POST** `…/course-creation/tasks/{task_id}/create-course/` — create the course on the LMS.
+- **POST** `…/course-creation/tasks/{task_id}/create-course-outline/` — generate the outline with AI.
+
+### Courses
+
+- **DELETE** `…/course-creation/course/{course_id}/` — delete the course record. Destructive — confirm with the user first.
 - **POST** `…/course-creation/course/{course_id}/draft-content-for-unit/` — draft content for one unit.
 
 ## Example

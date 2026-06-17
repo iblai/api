@@ -20,44 +20,29 @@ side, use `/iblai-agent-memory`.)
 - Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
-## Basic & Social
+## Reads
+
+### Basic & Social
 
 Basic fields (full name, email, title, about, language) and social links are the
 user's account record.
 
 - **GET** `https://api.iblai.app/lms/api/user/v1/accounts/{username}` — account: `name`, `email`, `bio` (about text), `language_proficiencies`, `social_links`, profile image.
 - **GET** `https://api.iblai.app/lms/api/ibl/users/manage/metadata/?username={username}` — extended profile metadata (e.g. title).
-- **PATCH** `https://api.iblai.app/lms/api/user/v1/accounts/{username}` — update basic/social fields (`Content-Type: application/merge-patch+json`; send only changed keys):
-  ```json
-  {
-    "name": "string",
-    "bio": "string",
-    "language_proficiencies": [{ "code": "en" }],
-    "social_links": [{ "platform": "linkedin", "social_link": "https://…" }]
-  }
-  ```
 
-## Education
+### Education
 
 - **GET** `https://api.iblai.app/dm/api/career/orgs/{org}/education/users/{username}/` — list education records.
-- **POST** `…/dm/api/career/orgs/{org}/education/users/{username}/` — create an education entry.
-- **PUT** `…/dm/api/career/orgs/{org}/education/users/{username}/` — update an entry (body includes its `id`).
-- **GET / POST / PUT** `…/dm/api/career/orgs/{org}/institutions/users/{username}/` — institutions (the schools referenced by education records).
 
-## Experience
+### Experience
 
 - **GET** `https://api.iblai.app/dm/api/career/orgs/{org}/experience/users/{username}/` — list experience records.
-- **POST** `…/dm/api/career/orgs/{org}/experience/users/{username}/` — create an experience entry.
-- **PUT** `…/dm/api/career/orgs/{org}/experience/users/{username}/` — update an entry (body includes its `id`).
-- **GET / POST / PUT** `…/dm/api/career/orgs/{org}/companies/users/{username}/` — companies (the employers referenced by experience records).
 
-## Resume
+### Resume
 
 - **GET** `https://api.iblai.app/dm/api/career/resume/orgs/{org}/users/{username}/` — fetch resume + media files.
-- **POST** `…/dm/api/career/resume/orgs/{org}/users/{username}/` — upload a resume (`multipart/form-data`).
-- **PUT** `…/dm/api/career/resume/orgs/{org}/users/{username}/` — replace the resume (`multipart/form-data`).
 
-## Memory
+### Memory
 
 Memory covers two personalization flags plus the user's auto-extracted
 memories:
@@ -69,6 +54,38 @@ memories:
   These are the same memory objects the admin side manages; see
   **`/iblai-agent-memory`** for the memory CRUD endpoints
   (`…/mentors/{mentor}/mentor-memories/`), here scoped to the signed-in user.
+
+## Writes
+
+### Basic & Social
+
+- **PATCH** `https://api.iblai.app/lms/api/user/v1/accounts/{username}` — update basic/social fields (`Content-Type: application/merge-patch+json`; send only changed keys):
+  ```json
+  {
+    "name": "string",
+    "bio": "string",
+    "language_proficiencies": [{ "code": "en" }],
+    "social_links": [{ "platform": "linkedin", "social_link": "https://…" }]
+  }
+  ```
+
+### Education
+
+- **POST** `…/dm/api/career/orgs/{org}/education/users/{username}/` — create an education entry.
+- **PUT** `…/dm/api/career/orgs/{org}/education/users/{username}/` — update an entry (body includes its `id`).
+- **GET / POST / PUT** `…/dm/api/career/orgs/{org}/institutions/users/{username}/` — institutions (the schools referenced by education records).
+
+### Experience
+
+- **POST** `…/dm/api/career/orgs/{org}/experience/users/{username}/` — create an experience entry.
+- **PUT** `…/dm/api/career/orgs/{org}/experience/users/{username}/` — update an entry (body includes its `id`).
+- **GET / POST / PUT** `…/dm/api/career/orgs/{org}/companies/users/{username}/` — companies (the employers referenced by experience records).
+
+### Resume
+
+- **POST** `…/dm/api/career/resume/orgs/{org}/users/{username}/` — upload a resume (`multipart/form-data`).
+- **PUT** `…/dm/api/career/resume/orgs/{org}/users/{username}/` — replace the resume (`multipart/form-data`).
+
 ## Example
 
 Update the user's about text and add a LinkedIn social link:

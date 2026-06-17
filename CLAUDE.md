@@ -44,7 +44,23 @@ mcp/                    # hosted Python MCP server — runtime chat only
 ## Skills
 
 - Each skill is a single `SKILL.md` with YAML frontmatter (`name`, `description`) following the format of `skills/iblai-agent-settings/SKILL.md` and `skills/iblai-login/SKILL.md`.
+- **Canonical section structure (every endpoint-documenting skill MUST follow this):**
+  1. `## Auth & conventions` — base URL, header, path vars, prefix, "run `/iblai-login` first" line, and the destructive-confirm note.
+  2. *(optional)* one short explanatory section (e.g. `## Concepts`, `## Pagination`) when the API needs framing before the endpoints.
+  3. `## Reads` — every read endpoint (**GET**/**HEAD**).
+  4. `## Writes` — every write endpoint (**POST**/**PUT**/**PATCH**/**DELETE**); mark each destructive/outward-facing call "Confirm with the user first."
+  5. `## Example` — one realistic `curl`.
+  6. `## Notes` — gotchas.
+  - **Multi-resource skills** (catalog, crm, rbac, billing, …) keep their resource grouping as `###` sub-headings **inside** `## Reads` and `## Writes` (a resource with both appears under each). Do **not** group endpoints by resource at the top level — Reads/Writes is always the top-level split.
+  - A read-only skill may omit `## Writes`; a write-only skill may omit `## Reads`.
+  - Exceptions: non-REST flow skills (`iblai-login`, `iblai-agent-chat`) are setup guides, not endpoint references, and do not use Reads/Writes.
 - **Auth model (every skill):** base URL `https://api.iblai.app`, header `Authorization: Api-Token $IBLAI_API_KEY`. Path vars `{org}` = `$IBLAI_ORG` (a.k.a. `platform_key`), `{username}` = `$IBLAI_USERNAME`, `{mentor}` = the agent's unique id.
+- **Gateway prefixes — `/dm` and `/edx`.** `api.iblai.app` is a gateway that sits **in front of** the backend services and strips a prefix before routing:
+  - `https://api.iblai.app/dm/...` → the **Data Manager** service (the [`iblai/iblai-dm-pro`](https://github.com/iblai/iblai-dm-pro) repo).
+  - `https://api.iblai.app/edx/...` → the **Open edX** service (a different system).
+
+  The prefix is added at the gateway, so it does **not** appear in any backend `urls.py` — the source repos register bare `/api/...` routes. A skill must prepend the right prefix (e.g. a DM route `/api/catalog/courses/` is documented and called as `https://api.iblai.app/dm/api/catalog/courses/`). When in doubt, an endpoint is a **`/dm`** endpoint.
+- **Source of truth = the repo URLconf, not the docs.** Skills for DM features are derived from `iblai-dm-pro`. The app `USAGE.md` files are a starting point but contain errors, gaps, and (critically) endpoints that only apply to **edX** — those do **not** belong here. **Rule: only document an endpoint if it is registered in that repo's `urls.py` (i.e. reachable at `api.iblai.app/dm/...`).** If a path is not in this repo's URL configuration, drop it — it would not resolve via `/dm`. Always verify each endpoint's method, path, and request fields against the actual `urls.py` / views / serializers before shipping a skill.
 - **Connecting an organization:** `/iblai-login` opens `https://login.iblai.app/me`, lets the user pick one of their organizations, and writes `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` to `.env`. Always ask the user which org to target — accounts can belong to many (40+ is normal).
   - **Logged out:** `/me` redirects to `/login`. Detect this (URL is `/login`, no "My Account" content), hand the user the `https://login.iblai.app/me` URL, and wait for them to sign in — never enter their credentials.
   - **After login the platform redirects somewhere else** (the destination varies and may change), NOT back to `/me`. Don't depend on where it lands — always **re-navigate explicitly to `https://login.iblai.app/me`** before reading params.

@@ -18,7 +18,7 @@ providers or data sources, or issuing API keys.
 - Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
-## Reads & Writes
+## Reads
 
 ### LLMs
 
@@ -27,6 +27,27 @@ Third-party model provider keys. DM base: `/api/ai-account/…`.
 - **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/masked-llm-credential/` — list configured providers (masked).
 - **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/credential/schema/` — provider field schema.
 - **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/mentor/llms/` — available provider list.
+
+### Data Sources
+
+Data source provider credentials. DM base: `/api/ai-account/…`.
+
+- **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/masked-integration-credential/` — list configured data sources (masked).
+- **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/integration-credential/schema/v2/[?name=]` — provider field schema.
+
+### APIs
+
+Platform API keys. Same endpoints used to mint tokens elsewhere — see
+**`/iblai-tokens`** for the full reference.
+
+- **GET** `https://api.iblai.app/dm/api/core/platform/api-tokens/?platform_key={org}` — list tokens.
+
+## Writes
+
+### LLMs
+
+Third-party model provider keys. DM base: `/api/ai-account/…`.
+
 - **POST** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/credential/` — add an LLM provider:
   ```json
   {
@@ -48,8 +69,6 @@ Third-party model provider keys. DM base: `/api/ai-account/…`.
 
 Data source provider credentials. DM base: `/api/ai-account/…`.
 
-- **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/masked-integration-credential/` — list configured data sources (masked).
-- **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/integration-credential/schema/v2/[?name=]` — provider field schema.
 - **POST** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/integration-credential/` — add a data source:
   ```json
   {
@@ -71,7 +90,6 @@ Data source provider credentials. DM base: `/api/ai-account/…`.
 Platform API keys. Same endpoints used to mint tokens elsewhere — see
 **`/iblai-tokens`** for the full reference.
 
-- **GET** `https://api.iblai.app/dm/api/core/platform/api-tokens/?platform_key={org}` — list tokens.
 - **POST** `https://api.iblai.app/dm/api/core/platform/api-tokens/` — create a token:
   ```json
   {

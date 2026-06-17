@@ -95,6 +95,8 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-management       /iblai-crm
 /iblai-integrations     /iblai-notifications
 /iblai-tokens          /iblai-invites
+/iblai-scim            /iblai-billing
+/iblai-features
 ```
 
 ### Profile
@@ -107,7 +109,9 @@ After installing, use these directly in your AI agent with `/` commands.
 
 ```text
 /iblai-search              /iblai-course-create
-/iblai-analytics
+/iblai-analytics           /iblai-catalog
+/iblai-milestones          /iblai-credentials
+/iblai-catalog-media       /iblai-catalog-invitations
 ```
 
 ### What each skill does
@@ -142,11 +146,19 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-tokens` | Platform API Tokens — list, create (secret shown once), delete |
 | `/iblai-notifications` | Org notifications — counts, inbox, mark-as-read, build & send |
 | `/iblai-invites` | User invitations — list and send (single or CSV bulk) |
+| `/iblai-scim` | SCIM 2.0 directory provisioning — users (Enterprise extension), groups, departments, memberships; RBAC group assignment auto-links platforms |
+| `/iblai-billing` | Billing & credits — credit accounts, item paywalls, prices, checkout (auth + guest), subscriptions, access checks, revenue/subscriber reporting |
+| `/iblai-features` | Per-user feature config & flags — get/update (inline or feature+values), bulk-config, apps/onboarding, trial activation, platform provisioning |
 | `/iblai-profile` | The signed-in user's own profile — Basic, Social, Education, Experience, Resume, Memory |
 | `/iblai-profile-metadata` | Per-user, per-org metadata key-value store — preferences, settings, feature flags |
 | `/iblai-search` | Discover agents and content + personalized (RAG) recommendations — faceted search (read-only) |
 | `/iblai-analytics` | Analytics across agents, content, and users — KPIs, users, topics, transcripts, costs, courses, programs, audit, reports |
 | `/iblai-course-create` | Course Creation API — generate, edit, and publish courses (tasks, outline, structure) |
+| `/iblai-catalog` | Learning catalog — courses, programs, pathways, resources, skills/roles taxonomy, enrollment, eligibility, reviews |
+| `/iblai-milestones` | Catalog milestones — course/resource/program/pathway completions and skill points (block, course, platform, user) |
+| `/iblai-credentials` | Digital credentials — credential CRUD, user/group assignments, assertions, course import/export, provider config (Accredible), analytics |
+| `/iblai-catalog-media` | Catalog media resources — list/create/update/delete media tied to courses/units/items, multipart upload, search, by-item lookup |
+| `/iblai-catalog-invitations` | Catalog invitations & licensing — platform/course/program invitations (bulk, blank, redeem), licenses & assignments, access requests, suggestions |
 
 Skills live in [`skills/`](./skills). Read them, extend them, or write your own.
 

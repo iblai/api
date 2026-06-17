@@ -24,7 +24,9 @@ which skills an agent has assigned, and manage the catalog itself (create / edit
 - **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/agent-skills/` — platform skill catalog.
 - **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/mentors/{mentor}/skills/` — skills assigned to this agent.
 
-## Writes — assignment (toggle)
+## Writes
+
+### Assignment (toggle)
 
 - **POST** `…/mentors/{mentor}/skills/` — assign a skill to the agent:
   ```json
@@ -41,7 +43,7 @@ which skills an agent has assigned, and manage the catalog itself (create / edit
   ```
 - **DELETE** `…/mentors/{mentor}/skills/{assignmentId}/` — unassign the skill (no body).
 
-## Writes — catalog CRUD
+### Catalog CRUD
 
 - **POST** `…/orgs/{org}/agent-skills/` — create a catalog skill:
   ```json

@@ -29,29 +29,55 @@ what" surface under `…/dm/api/core/rbac/…`.
 - There are **well-known roles** the platform ships with; list them with the
   roles endpoint (optionally including globals).
 
-## Roles
+## Reads
+
+### Roles
 
 - **GET** `https://api.iblai.app/dm/api/core/rbac/roles/?platform_key={org}` — list roles (add `&include_global_roles=true` to include globals).
-- **POST** `https://api.iblai.app/dm/api/core/rbac/roles/` — create a role.
 - **GET** `https://api.iblai.app/dm/api/core/rbac/roles/{id}/?platform_key={org}` — fetch one role.
+
+### Agent access
+
+- **GET** `https://api.iblai.app/dm/api/core/rbac/agent-access/?platform_key={org}&mentor_id={id}` — list an agent's access policies.
+
+### Policies
+
+- **GET** `https://api.iblai.app/dm/api/core/rbac/policies/{id}/?platform_key={org}` — fetch one policy.
+
+### Groups
+
+- **GET** `https://api.iblai.app/dm/api/core/rbac/groups/{id}/?platform_key={org}` — fetch one group.
+
+### Team (user-group) sharing
+
+- **GET** `https://api.iblai.app/dm/api/core/rbac/teams/access/?platform_key={org}&usergroup_id={id}` — list a team's access policies.
+
+### Student toggles
+
+- **GET** `https://api.iblai.app/dm/api/core/rbac/student-agent-creation/status/?platform_key={org}` — read the current toggle.
+- **GET** `https://api.iblai.app/dm/api/core/rbac/student-llm-access/status/?platform_key={org}` — read the current toggle.
+
+## Writes
+
+### Roles
+
+- **POST** `https://api.iblai.app/dm/api/core/rbac/roles/` — create a role.
 - **PUT / PATCH** `https://api.iblai.app/dm/api/core/rbac/roles/{id}/` — update a role.
 - **DELETE** `https://api.iblai.app/dm/api/core/rbac/roles/{id}/?platform_key={org}` — delete a role. Destructive — confirm with the user first.
 
-## Policies
+### Policies
 
 - **GET / POST** `https://api.iblai.app/dm/api/core/rbac/policies/?platform_key={org}` — list / create policies.
-- **GET** `https://api.iblai.app/dm/api/core/rbac/policies/{id}/?platform_key={org}` — fetch one policy.
 - **PUT / PATCH** `https://api.iblai.app/dm/api/core/rbac/policies/{id}/` — update a policy.
 - **DELETE** `https://api.iblai.app/dm/api/core/rbac/policies/{id}/?platform_key={org}` — delete a policy. Destructive — confirm with the user first.
 
-## Groups
+### Groups
 
 - **GET / POST** `https://api.iblai.app/dm/api/core/rbac/groups/?platform_key={org}` — list / create groups.
-- **GET** `https://api.iblai.app/dm/api/core/rbac/groups/{id}/?platform_key={org}` — fetch one group.
 - **PUT / PATCH** `https://api.iblai.app/dm/api/core/rbac/groups/{id}/` — update a group.
 - **DELETE** `https://api.iblai.app/dm/api/core/rbac/groups/{id}/?platform_key={org}` — delete a group. Destructive — confirm with the user first.
 
-## Permission check
+### Permission check
 
 - **POST** `https://api.iblai.app/dm/api/core/rbac/permissions/check/` — check the caller's access to resources:
   ```json
@@ -61,26 +87,22 @@ what" surface under `…/dm/api/core/rbac/…`.
   }
   ```
 
-## Agent access
+### Agent access
 
 - **POST** `https://api.iblai.app/dm/api/core/rbac/agent-access/` — share an agent (body includes `platform_key`, `mentor_id`, `role`, and `users`/`groups`).
-- **GET** `https://api.iblai.app/dm/api/core/rbac/agent-access/?platform_key={org}&mentor_id={id}` — list an agent's access policies.
 
-## Team (user-group) sharing
+### Team (user-group) sharing
 
 - **POST** `https://api.iblai.app/dm/api/core/rbac/teams/access/` — share a user-group (team).
-- **GET** `https://api.iblai.app/dm/api/core/rbac/teams/access/?platform_key={org}&usergroup_id={id}` — list a team's access policies.
 
-## Bulk user policies
+### Bulk user policies
 
 - **PUT** `https://api.iblai.app/dm/api/core/platform/users/policies/` — set policies for users (array).
 
-## Student toggles
+### Student toggles
 
 - **POST** `https://api.iblai.app/dm/api/core/rbac/student-agent-creation/set/` — enable/disable student agent creation.
-- **GET** `https://api.iblai.app/dm/api/core/rbac/student-agent-creation/status/?platform_key={org}` — read the current toggle.
 - **POST** `https://api.iblai.app/dm/api/core/rbac/student-llm-access/set/` — enable/disable student LLM access.
-- **GET** `https://api.iblai.app/dm/api/core/rbac/student-llm-access/status/?platform_key={org}` — read the current toggle.
 
 ## Example
 

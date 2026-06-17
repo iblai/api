@@ -33,7 +33,9 @@ users have chatted with an agent.
 - **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/mentors/{mentor}/summaries/general/` — general summary, average rating, and topics.
 - **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/memory/{conversationId}/` — per-conversation memory.
 
-## Writes (Export)
+## Writes
+
+### Export
 
 Export is async — **POST** to create the report, then **GET**-poll until the
 download URL appears.

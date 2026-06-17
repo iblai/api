@@ -21,9 +21,21 @@ signed-in user; admins can target another user.
 - Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
-## Endpoints (all take `?platform_key={org}`; admins may add `&username={other_user}`)
+## Reads
+
+### Endpoints (all take `?platform_key={org}`; admins may add `&username={other_user}`)
 
 - **GET** `https://api.iblai.app/dm/api/core/users/platform-metadata/?platform_key={org}` — retrieve all metadata (defaults to the authenticated user).
+
+### Admin (target another user)
+
+- Append `&username={other_user}` to any of the above (admin only) to
+  read/update/replace/delete that user's metadata.
+
+## Writes
+
+### Endpoints (all take `?platform_key={org}`; admins may add `&username={other_user}`)
+
 - **PATCH** `https://api.iblai.app/dm/api/core/users/platform-metadata/?platform_key={org}` — update or delete specific keys without touching others (include at least one of `metadata` or `delete_keys`):
   ```json
   {
@@ -39,7 +51,7 @@ signed-in user; admins can target another user.
   ```
 - **DELETE** `https://api.iblai.app/dm/api/core/users/platform-metadata/?platform_key={org}` — clear all metadata for the user. Destructive — confirm with the user first.
 
-## Admin (target another user)
+### Admin (target another user)
 
 - Append `&username={other_user}` to any of the above (admin only) to
   read/update/replace/delete that user's metadata.
