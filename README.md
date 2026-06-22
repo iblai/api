@@ -167,6 +167,40 @@ After installing, use these directly in your AI agent with `/` commands.
 
 Skills live in [`skills/`](./skills). Read them, extend them, or write your own.
 
+## Updating the skills
+
+Each skill is one `SKILL.md` that maps an operation to its **exact** `api.iblai.app`
+endpoints (method, URL, body). Because the value is endpoint accuracy, edits must be
+verified against the real API — not against docs or guesswork. The full contract is in
+[`CLAUDE.md`](./CLAUDE.md); the essentials:
+
+- **Source of truth is the backend URLconf, not the docs.** Only document an endpoint
+  if it is registered in the backend repo's `urls.py` (so it actually resolves through
+  the gateway). DM skills are derived from [`iblai/iblai-dm-pro`](https://github.com/iblai/iblai-dm-pro);
+  app `USAGE.md` files are a starting point but contain errors, gaps, and edX-only
+  endpoints that do **not** belong here. Verify each endpoint's method, path, and
+  request fields against the actual `urls.py` / views / serializers before shipping.
+- **Mind the gateway prefix.** `api.iblai.app` strips a prefix before routing:
+  `…/dm/…` → the Data Manager service, `…/edx/…` → Open edX. The prefix is added at the
+  gateway, so a backend route like `/api/catalog/courses/` is documented and called as
+  `https://api.iblai.app/dm/api/catalog/courses/`. When in doubt, it's a `/dm` endpoint.
+- **Keep the canonical structure.** YAML frontmatter (`name`, `description`), then
+  `## Auth & conventions` → optional concept section → `## Reads` (GET/HEAD) →
+  `## Writes` (POST/PUT/PATCH/DELETE) → `## Example` (one real `curl`) → `## Notes`.
+  Multi-resource skills group resources as `###` sub-headings inside Reads/Writes —
+  Reads/Writes is always the top-level split. Mark every destructive or outward-facing
+  call (delete, send, invite) "confirm with the user first."
+- **Describe APIs, not UIs.** Never reference menus, tabs, buttons, or pages — the
+  value is the endpoint, not the screen it used to live behind.
+- **Follow the naming + terminology rules.** Skill scope is encoded by prefix
+  (`iblai-agent-*` = one agent, `iblai-profile*` = the signed-in user, bare names =
+  org-wide). Use **org / org key** for a customer workspace, not "tenant" or
+  "platform" (see the Terminology section in [`CLAUDE.md`](./CLAUDE.md)).
+
+When a platform endpoint changes, update the affected `SKILL.md` and bump the skill
+count badge if you add or remove a skill. Open a PR — see the recent commits for the
+verification-first style expected.
+
 ## MCP Server
 
 Hosted Model Context Protocol server — no local installation required. This covers the one **runtime** capability the skills can't: actually talking to a deployed agent. Wire it up with **`/iblai-agent-chat`** (it writes the config below from your `.env` token + a chosen agent), or add it manually. (Administering the platform is the skills' job — see [Skills vs MCP servers](#skills-vs-mcp-servers).)
