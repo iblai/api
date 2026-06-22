@@ -32,15 +32,20 @@ npx skills add iblai/api
 
 This installs skills that teach your AI agent how to **drive the ibl.ai platform REST API directly** — configure agents, manage datasets and memory, administer users and roles, send notifications, and pull analytics — for any organization you belong to. You'll now have the `/iblai-*` commands in your agent.
 
-### 2. Connect an organization
+### 2. Get signed in
 
-Run the login skill once. It opens [login.iblai.app/me](https://login.iblai.app/me), you sign in via SSO, it asks which of your organizations to use, and it writes your **org key**, **username**, and a **Platform API Token** to `.env`:
+You need an ibl.ai account with your own organization. Two ways in:
+
+- **No account (or no org of your own)?** Go to **[ibl.ai/join](https://ibl.ai/join)**. Signing up creates your account *and* your organization and leaves you logged in — that's everything you need.
+- **Already have an account?** Sign in at **[login.iblai.app/me](https://login.iblai.app/me)**.
+
+### 3. Connect it
+
+Run the login skill once. It reads your signed-in session from `login.iblai.app/me`, asks which organization to use, and writes your **org key**, **username**, and a **Platform API Token** to `.env`:
 
 ```text
 /iblai-login
 ```
-
-> **First time?** No ibl.ai account → start at [ibl.ai/join](https://ibl.ai/join) (it leads you through creating your organization), then run `/iblai-login`. Already signed in but only see the shared **`main`** organization? That's not your own workspace — create your own org first; `/iblai-login` handles it.
 
 Every other skill then reads `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` from `.env` and calls `https://api.iblai.app` with `Authorization: Api-Token <key>`.
 
@@ -208,9 +213,9 @@ Everything authenticates the same way:
 - **Base URL:** `https://api.iblai.app`
 - **Header:** `Authorization: Api-Token <key>` on every request
 - **Org & username:** from [login.iblai.app/me](https://login.iblai.app/me) — each organization you belong to shows its **key** (e.g. `enterprise`, `iblai`, or a UUID)
-- **Api-Token:** your **first** token comes from the platform admin (or `login.iblai.app`); once you're connected, `/iblai-tokens` lists, creates, and rotates tokens. The secret is shown once.
+- **Api-Token:** `/iblai-login` mints your first token from your signed-in session; afterward `/iblai-tokens` lists, creates, and rotates tokens. The secret is shown once.
 
-The `/iblai-login` skill walks through all of this and writes `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` to `.env`. Never commit `.env` — it is in `.gitignore`.
+`/iblai-login` does all of this for you — get signed in (via [ibl.ai/join](https://ibl.ai/join) if you're new, or [login.iblai.app/me](https://login.iblai.app/me) if you have an account), then run it and it writes `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` to `.env`. Never commit `.env` — it is in `.gitignore`.
 
 ## Resources
 
