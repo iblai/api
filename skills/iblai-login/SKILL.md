@@ -1,6 +1,6 @@
 ---
 name: iblai-login
-description: Connect an ibl.ai organization for API access. Gets the user signed in (ibl.ai/join if new, login.iblai.app/me if returning), captures their org key and username, mints a Platform API Token, and writes IBLAI_ORG / IBLAI_USERNAME / IBLAI_API_KEY to .env. Run this first before any other iblai-* skill.
+description: Connect an ibl.ai organization for API access. Gets the user signed in (ibl.ai/join if new, login.iblai.app/me if returning), captures their org key and username, mints a Platform API Token, and writes IBLAI_ORG / IBLAI_USERNAME / IBLAI_API_KEY to .env. If you already hold org credentials (key + secret), the secret works directly as the Api-Token — no browser needed. Run this first before any other iblai-* skill.
 ---
 
 # iblai-login
@@ -20,6 +20,33 @@ Every API call needs three things — your **org key**, your **username**, and a
 
 The base URL is fixed: `https://api.iblai.app`. Auth header on every request is
 `Authorization: Api-Token <IBLAI_API_KEY>`.
+
+## Fastest path — org credentials (key + secret)
+
+If you already hold **organization credentials** — an **org key** and an **org
+secret** (issued for the org for automation/CI; the same pair the ibl.ai
+quickstarts use) — you can skip the browser entirely. The **org secret works
+directly as the Platform API Token**; there is nothing to mint:
+
+```dotenv
+IBLAI_ORG=<org key>          # e.g. acme
+IBLAI_API_KEY=<org secret>   # used verbatim as: Authorization: Api-Token <secret>
+```
+
+The only value left is `IBLAI_USERNAME`. Read an admin username straight from the
+API with the two values above — no `/me` page needed:
+
+```bash
+set -a; . ./.env; set +a
+curl -s "https://api.iblai.app/dm/api/core/platform/users/?platform_key=$IBLAI_ORG&platform_org=$IBLAI_ORG&page=1&page_size=5" \
+  -H "Authorization: Api-Token $IBLAI_API_KEY" \
+  | python3 -c "import sys,json;[print(u['username'], u.get('is_admin')) for u in json.load(sys.stdin)['results']]"
+# pick an is_admin=True username → IBLAI_USERNAME
+```
+
+Then skip to **step 3** (save to `.env`) and **step 4** (verify). The
+browser-session flow below is only for when you *don't* have org credentials and
+must mint a token from a signed-in session.
 
 ## Get the user signed in
 
@@ -92,9 +119,12 @@ read the values off the page.
      > org (URL becomes `os.ibl.ai/platform/<org>/…`), then read the refreshed
      > `dm_token` from that page's `localStorage`.
 
-   - **Without a browser:** have the user create a token in the platform admin (or
-     at `login.iblai.app`) and paste the secret. Recommend `claude --chrome` to
-     automate this.
+   - **Without a browser:** if you have **org credentials (key + secret)**, skip
+     this step entirely — the org secret *is* the `IBLAI_API_KEY` (see
+     [Fastest path — org credentials](#fastest-path--org-credentials-key--secret)
+     above). Otherwise, have the user create a token in the platform admin (or at
+     `login.iblai.app`) and paste the secret; recommend `claude --chrome` to
+     automate it.
 
 3. **Save to `.env` (and make sure it's gitignored).**
 

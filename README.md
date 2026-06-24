@@ -49,6 +49,8 @@ Run the login skill once. It reads your signed-in session from `login.iblai.app/
 
 Every other skill then reads `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` from `.env` and calls `https://api.iblai.app` with `Authorization: Api-Token <key>`.
 
+> **Headless / CI? Already have org credentials (key + secret)?** Skip the browser. An **org secret** works directly as the Api-Token — set `IBLAI_ORG=<org key>` and `IBLAI_API_KEY=<org secret>`, then read `IBLAI_USERNAME` from the API (an `is_admin` user on the org). `/iblai-login` documents this path under [Fastest path — org credentials](skills/iblai-login/SKILL.md).
+
 ## What is iblai/api
 
 A toolkit for operating the [ibl.ai](https://ibl.ai) platform from your AI agent. Where [`iblai/vibe`](https://github.com/iblai/vibe) gives you UI components to *build* an app, `iblai/api` gives you skills to *run the platform itself* — every agent-configuration and platform-admin operation mapped to its exact REST endpoints (method, URL, body) — plus a hosted MCP server for the one runtime capability that isn't a REST call: chatting with a deployed agent.
@@ -248,6 +250,7 @@ Everything authenticates the same way:
 - **Header:** `Authorization: Api-Token <key>` on every request
 - **Org & username:** from [login.iblai.app/me](https://login.iblai.app/me) — each organization you belong to shows its **key** (e.g. `enterprise`, `iblai`, or a UUID)
 - **Api-Token:** `/iblai-login` mints your first token from your signed-in session; afterward `/iblai-tokens` lists, creates, and rotates tokens. The secret is shown once.
+- **Org credentials (key + secret):** for headless/CI use, an org **secret** is itself a valid Api-Token — set `IBLAI_API_KEY=<org secret>` and `IBLAI_ORG=<org key>` with no browser step. See [Fastest path — org credentials](skills/iblai-login/SKILL.md).
 
 `/iblai-login` does all of this for you — get signed in (via [ibl.ai/join](https://ibl.ai/join) if you're new, or [login.iblai.app/me](https://login.iblai.app/me) if you have an account), then run it and it writes `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` to `.env`. Never commit `.env` — it is in `.gitignore`.
 
