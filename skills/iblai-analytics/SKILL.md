@@ -1,134 +1,215 @@
 ---
 name: iblai-analytics
-description: Read ibl.ai analytics via the platform API across agents, content, and users — overview KPIs, users, topics, transcripts, costs, courses, programs, and audit — plus generate and download Data Reports. Scope per-agent or organization-wide. Use to pull usage, engagement, cost, catalog, or per-user learning data.
+description: Read ibl.ai analytics via the platform API — overview KPIs, users, topics, transcripts, costs, and catalog performance for courses, programs, pathways, and skills — plus per-learner drill-downs, time-on-platform, and async Data Reports (generate, poll, download). Scope per-agent or platform-wide. Use to pull usage, engagement, cost, catalog, or per-user learning data.
 ---
 
 # iblai-analytics
 
-Read ibl.ai analytics from the API across all three scopes:
+Read ibl.ai analytics and generate Data Reports from the platform API. Every endpoint lives under `https://api.iblai.app/dm/api/analytics/…` or `https://api.iblai.app/dm/api/reports/platforms/{platform_key}/…`.
 
-- **Agent analytics** — include `mentor_unique_id` to scope any metric to one agent.
-- **Organization / content analytics** — omit `mentor_unique_id` for org-wide
-  metrics, plus the catalog **Courses** and **Programs** breakdowns.
-- **User analytics** — a single user's enrollments, grades, time spent, engagement.
-
-Reads are read-only; the only writes are Data Reports.
+Reads are read-only. Reports are the only writes: kick one off, poll until it finishes, download the CSV or JSON.
 
 ## Auth & conventions
 
 - **Base URL:** `https://api.iblai.app`
 - **Header:** `Authorization: Api-Token $IBLAI_API_KEY` on every request.
-- **Path vars:** `{org}` = `$IBLAI_ORG`, `{username}` = `$IBLAI_USERNAME`,
-  `{mentor}` = an agent's unique id (**optional** — include for agent scope, omit
-  for org-wide).
-- **Host:** analytics live on **DM** at `…/dm/api/analytics/…`; **Audit** is on
-  DM under `…/dm/api/ai-mentor/…`.
-- **Chart params:** every chart passes `date_filter` (`today` | `7d` | `30d` |
-  `90d` | `custom`; `custom` adds `start_date` / `end_date`), `platform_key={org}`,
-  optional `mentor_unique_id={mentor}` (agent scope), and optional `usergroup_ids`.
-  Below, `…` = `https://api.iblai.app/dm/api` and a trailing `&platform_key={org}`
-  (plus `&mentor_unique_id={mentor}` when scoping to an agent) is implied as `&…`.
-- Not connected yet? Run **`/iblai-login`** first.
+- **Path vars:** `{platform_key}` = `$IBLAI_ORG` (the platform key on the wire — Reports uses this).
+- **Anchor:** `{dm_url}` = `https://api.iblai.app/dm` throughout the skill. Every URL below is written `{dm_url}/api/analytics/…` or `{dm_url}/api/reports/…` and substitutes to the full https URL at call time. Matches the anchor used in vibe's iblai-* skills.
+- Not connected yet? Run **`/iblai-login`** first to populate `IBLAI_ORG` and `IBLAI_API_KEY`.
+- Confirm with the user before creating a Data Report — the job runs against the platform and its output may be shared.
+
+## Ground source: OpenAPI schema (priority)
+
+**The OpenAPI schema is the contract, not this file.** Every URL, parameter, enum, and response shape below is orientation only — consult the schema before writing any request. If this file disagrees with the schema, the schema wins.
+
+Two sources, in priority order:
+
+1. **Live schema (authoritative)** — `https://api.iblai.app/dm/api/docs/schema/?format=json`. Browse at `https://api.iblai.app/dm/api/docs/`.
+2. **Local snapshot (offline bootstrap)** — [`references/analytics-schema.json`](references/analytics-schema.json). Filtered to `/api/analytics/*` and `/api/reports/*`. Refresh with the routine in [`references/schema.md`](references/schema.md). Reference only; the live schema wins on any disagreement.
+
+See [`references/schema.md`](references/schema.md) for fetch, filter, refresh, and drift-check commands. Run the drift check before shipping any code that hits these endpoints — every URL cited here must appear in the live schema.
+
+## Concepts
+
+### Scope: agent vs platform
+
+Every `/api/analytics/*` endpoint accepts an optional `mentor_unique_id` query param. Include it to scope a metric to one agent; omit it for platform-wide. Same endpoints, same shapes — one param toggles scope.
+
+### Common query parameters
+
+| Parameter | Meaning |
+|---|---|
+| `date_filter` | `today` \| `7d` \| `30d` \| `90d` \| `all_time` \| `custom`. With `custom`, also send `start_date` and `end_date` (`yyyy-MM-dd`). |
+| `platform_key` | Optional on most endpoints; **required** on `learners/list/`. Defaults to the platform on the token. |
+| `mentor_unique_id` | Optional. Agent scope when present. |
+| `usergroup_ids` | Optional. Narrows any read (and any Report) to specific user groups. |
+| `granularity` | `day` \| `week` \| `month` (where the endpoint supports timeseries). |
+| `page`, `limit` | Pagination for listing endpoints. |
+| `search` | Free-text filter (users, topics, transcripts). |
+
+### RBAC
+
+Every read requires the `Ibl.Analytics/CanViewAnalytics/action` role (page-access gate) **plus** one of:
+
+- `Ibl.Analytics/Core/read` — user or usergroup analytics.
+- `Ibl.Analytics/Mentors/read` — mentor analytics (grant on a usergroup or user to row-filter to specific users).
+
+Mentor analytics pages also require `Ibl.Analytics/CanViewMentorAnalytics/action`. Reports also require `Ibl.Analytics/Reports/read`. A learner may read their own analytics without the page gate.
+
+### Data Reports lifecycle
+
+Reports run asynchronously. `POST /new` returns a `report_id` and a `state`. Poll the detail endpoint until `state` is `completed`, then hit `download`. Terminal states: `completed` (download at `url`), `cancelled`, `error`, `expired` (output evicted — regenerate). Intermediate states: `pending → running → accumulating → processing → storing`.
 
 ## Reads
 
-### Overview / Users / Topics / Transcripts / Costs
+Every URL below sits under `{dm_url}/api/analytics/`. All accept `platform_key`, `mentor_unique_id`, `usergroup_ids`, `date_filter`, `start_date`, `end_date` unless noted. Query strings elide trailing repeated params for brevity.
 
-These endpoints serve both **agent** scope and **organization-wide** scope;
-include `mentor_unique_id` for the former, omit it for the latter.
+### Overview
 
-#### Overview
+Headline KPIs for the landing page.
 
-- **GET** `…/analytics/topics/?date_filter=30d&…` — Messages / Topics / Conversations KPIs.
-- **GET** `…/analytics/users/?metric=active_users_last_30d&date_filter=30d&…` — Active Users KPI.
-- **GET** `…/analytics/sessions/?date_filter={r}&…` — Sessions line chart.
-- **GET** `…/analytics/topics/details/?date_filter={r}&…` — Topics bar chart.
+| Intent | Endpoint |
+|---|---|
+| Messages / topics KPIs | **GET** `{dm_url}/api/analytics/topics/?date_filter=30d` |
+| Conversations chart | **GET** `{dm_url}/api/analytics/conversations/?date_filter=30d` |
+| Active users headline | **GET** `{dm_url}/api/analytics/users/?metric=active_users_last_30d&date_filter=30d` |
+| Sessions timeseries | **GET** `{dm_url}/api/analytics/sessions/?date_filter=30d` |
 
-#### Users
+`topics/` and `sessions/` accept `metric` to switch between the overview KPI and a headline value.
 
-- **GET** `…/analytics/users/?metric=registered_users&date_filter=30d&…`
-- **GET** `…/analytics/users/?metric=active_users&date_filter={r}&…`
-- **GET** `…/analytics/users/?metric=currently_active&date_filter=today&…`
-- **GET** `…/analytics/time/?date_filter={r}&…` — access-time heatmap.
-- **GET** `…/analytics/users/details/?date_filter={r}&page={n}&limit=5&search={q}&…` — user table.
+### Costs (LLM & financial)
 
-#### Topics
+Aggregates and breakdowns.
 
-- **GET** `…/analytics/conversations?metric=conversations&date_filter={r}&…`
-- **GET** `…/analytics/topics/?date_filter=30d&…`
-- **GET** `…/analytics/ratings/?date_filter={r}&…`
-- **GET** `…/analytics/topics/details/?date_filter={r}&…`
+| Intent | Endpoint |
+|---|---|
+| Total / weekly / monthly cost headline | **GET** `{dm_url}/api/analytics/financial/?metric={total_costs\|weekly_costs\|monthly_costs}&date_filter=all_time` |
+| Cost per day chart | **GET** `{dm_url}/api/analytics/financial/?metric=total_costs&date_filter=30d` |
+| Cost breakdown | **GET** `{dm_url}/api/analytics/financial/details/?group_by={provider\|llm_model\|username\|mentor\|platform\|action}&date_filter=30d` |
+| Cost breakdown, paginated | append `&metrics=total_costs,sessions&page=1&limit=25&search=jane` |
+| Invoice CSV/JSON | **GET** `{dm_url}/api/analytics/financial/invoice/?date_filter=30d` |
 
-#### Transcripts
+`financial/` requires `metric`. `financial/details/` requires `group_by`.
 
-- **GET** `…/analytics/conversations?metric=headline&…`
-- **GET** `…/analytics/messages/?search={user}&topic={topic}&page={n}&limit=20&…` — transcript list.
-- **GET** `…/analytics/messages/details/?session_id={id}&…` — one transcript.
+### Users & engagement
 
-#### Costs
+Registered and active users, plus time-of-day patterns.
 
-- **GET** `…/analytics/financial/?metric=weekly_costs&date_filter=all_time&…`
-- **GET** `…/analytics/financial/?metric=monthly_costs&date_filter=all_time&…`
-- **GET** `…/analytics/financial/?metric=total_costs&all_time=true&…`
-- **GET** `…/analytics/financial/?metric=total_costs&date_filter={r}&…` — cost/day chart.
-- **GET** `…/analytics/financial/details/?group_by=provider&date_filter={r}&…`
-- **GET** `…/analytics/financial/details/?metrics=total_costs,sessions&group_by=username&date_filter={r}&page={n}&limit={l}&search={q}&…`
-- **GET** `…/analytics/financial/details/?metric=total_costs&group_by=llm_model&date_filter={r}&…`
+| Intent | Endpoint |
+|---|---|
+| Registered users | **GET** `{dm_url}/api/analytics/users/?metric=registered_users&date_filter=30d` |
+| Active users | **GET** `{dm_url}/api/analytics/users/?metric=active_users&date_filter=30d` |
+| Currently active | **GET** `{dm_url}/api/analytics/users/?metric=currently_active&date_filter=today` |
+| Time-of-day heatmap | **GET** `{dm_url}/api/analytics/time/?date_filter=30d` |
+| User table (search + paginate) | **GET** `{dm_url}/api/analytics/users/details/?search=jane&page=1&limit=25&date_filter=30d` |
 
-### Content (Courses & Programs)
+### Topics & conversations
 
-Course-level and program-level analytics are org-wide catalog breakdowns
-(no `mentor_unique_id`) on the same `…/dm/api/analytics/…` family, keyed
-by course/program — analogous to the `details` grouping used by Costs (e.g.
-`group_by`). Exact `courses` / `programs` sub-paths are platform-specific; use
-the `…/analytics/…/details/` endpoints grouped by course/program, or capture the
-precise sub-path from the live API responses.
+| Intent | Endpoint |
+|---|---|
+| Topic overview | **GET** `{dm_url}/api/analytics/topics/?date_filter=30d` |
+| Topic bar chart / details | **GET** `{dm_url}/api/analytics/topics/details/?search=&page=1&limit=25&date_filter=30d` |
+| Conversation counts | **GET** `{dm_url}/api/analytics/conversations/?metric=conversations&date_filter=30d` |
+| Ratings timeseries | **GET** `{dm_url}/api/analytics/ratings/?date_filter=30d` |
 
-### User analytics
+### Transcripts
 
-A single user's own learning data (enrollments, grades, time spent, engagement,
-last access). RBAC-gated (`IsPlatformAdminOfUser | IsSelfAccess`).
+| Intent | Endpoint |
+|---|---|
+| Transcript list | **GET** `{dm_url}/api/analytics/messages/?search={user_or_text}&sentiment={positive\|negative\|neutral}&topic={topic}&page=1&limit=20&date_filter=30d` |
+| One transcript | **GET** `{dm_url}/api/analytics/messages/details/?session_id={id}` |
 
-- **GET** `…/analytics/learners/?username={username}&limit={n}&page={n}&start_date=&end_date=&date_filter={r}` — unified user analytics (user info, summary metrics, per-platform results).
-- **GET** `…/analytics/learner/details?username={username}&start_date=&end_date=&date_filter={r}&metrics={…}` — detailed per-course analytics across catalog, agent, and credential data.
+`messages/details/` requires `session_id`.
 
-(`…/analytics/learners/` and `…/analytics/learner/details` keep the platform's
-wire spelling.)
+### Sessions & ratings
 
-### Audit
+`sessions/` and `ratings/` both take `metric` and `date_filter` and return timeseries for line charts. See the schema for the exact response shape.
 
-- **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/mentors/audit-logs/?limit=20&offset={n}&mentor={mentor}[&action=0|1|2&actor_email=&from_date=&to_date=]`
+### Course analytics
 
-### Data Reports
+Course-level analytics use `content/` with `metric=courses` (or `metric=course`).
 
-Data Reports (`…/reports`) are the only writes: kick off a report, poll until
-complete, then download the finished CSV from the presigned URL.
+| Intent | Endpoint |
+|---|---|
+| Course roster with enrolments / completions / ratings | **GET** `{dm_url}/api/analytics/content/?metric=courses&date_filter=30d` |
+| Per-course drill-down | **GET** `{dm_url}/api/analytics/content/details/{course_id}/?metric=courses&time_metric={enrollments\|completions\|ratings\|time_spent}&date_filter=30d` |
 
-- **GET** `…/reports/platforms/{org}/?mentor_id={mentorDbId}` — list reports + status.
-- **GET** `…/reports/platforms/{org}/{report_name}?mentor_unique_id={mentor}` — poll status until complete.
-- **GET** `{status.url}` — download the finished CSV.
+`{course_id}` is the catalog identifier (the same `course_id` `/api/catalog/` returns). `content/details/` requires `metric`.
+
+### Program analytics
+
+Program-level analytics use the same family, with `metric=programs` (or `metric=program`).
+
+| Intent | Endpoint |
+|---|---|
+| Program roster | **GET** `{dm_url}/api/analytics/content/?metric=programs&date_filter=30d` |
+| Per-program drill-down | **GET** `{dm_url}/api/analytics/content/details/{program_id}/?metric=programs&time_metric={enrollments\|completions\|ratings\|time_spent}` |
+
+### Pathway & skill analytics
+
+Same shape as course/program. Use `metric=pathways` or `metric=skills` on `content/`, and `metric=pathway` / `metric=skill` on `content/details/`.
+
+### Per-learner drill-down
+
+One learner's learning data.
+
+| Intent | Endpoint |
+|---|---|
+| Cross-platform learner summary | **GET** `{dm_url}/api/analytics/learners/?username={username}&date_filter=30d&page=1&limit=25` |
+| Sortable, filterable learner roster | **GET** `{dm_url}/api/analytics/learners/list/?platform_key={platform_key}&search=&sort_by={username\|name\|last_activity\|total_points\|total_time_spent_seconds\|total_enrollments\|total_skills_count}&sort_order={asc\|desc}&page=1&limit=25` |
+| Detailed learner profile | **GET** `{dm_url}/api/analytics/learner/details?username={username}&metrics={comma-separated}&include_edx_progress=true&course_id={id}&program_id={id}&pathway_id={id}&date_filter=30d` |
+
+`learners/list/` requires `platform_key`. `learner/details` takes **no trailing slash** — Django URL registration. A learner may read their own record with the same endpoints; self-access needs no admin role.
+
+### Time-on-platform
+
+| Intent | Endpoint |
+|---|---|
+| Time spent per user | **GET** `{dm_url}/api/analytics/time-spent/user/` |
+
+### Data Reports (list, poll, download)
+
+Report reads. See `## Writes → Data Reports` below for report creation.
+
+| Intent | Endpoint |
+|---|---|
+| List reports on the platform | **GET** `{dm_url}/api/reports/platforms/{platform_key}/?mentor_id={optional_pk}` — inlines the last-run status per report where one exists. |
+| Poll report status | **GET** `{dm_url}/api/reports/platforms/{platform_key}/{report_name}?mentor_unique_id={optional_uuid}` — poll until `state == "completed"`; `url` then holds the download link. |
+| Download a completed report | **GET** `{dm_url}/api/reports/platforms/{platform_key}/{task_id}/download?format={csv\|json}&columns={comma-separated}` — streams the finished output. `format` defaults to `csv`. `columns` reorders columns; leave empty for the default order. |
 
 ## Writes
 
-### Data Reports
+### Push time-on-platform (client beacon)
 
-- **POST** `…/reports/platforms/{org}/new` — generate a report:
+- **POST** `{dm_url}/api/analytics/orgs/{org}/time/update/` (the wire segments are literal — `{org}` holds the platform key value).
   ```json
   {
-    "report_name": "string (e.g. ai-mentor-chat-history)",
-    "mentor": "uuid",
-    "usergroup_ids": "number[]",
-    "start_date": "yyyy-MM-dd",
-    "end_date": "yyyy-MM-dd",
-    "course_id": "string",
-    "query": "string"
+    "time_spent_seconds": 120,
+    "session_id": "…",
+    "url": "…"
   }
   ```
 
+### Data Reports (create)
+
+- **POST** `{dm_url}/api/reports/platforms/{platform_key}/new` — kick off a report. **Confirm with the user first.**
+  ```json
+  {
+    "report_name": "ai-mentor-chat-history",
+    "mentor": "9e3b5c17-…",
+    "usergroup_ids": [12, 34],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "course_id": "course-v1:iblx+cs101+2026",
+    "source": "",
+    "query": ""
+  }
+  ```
+  All fields are optional; supply what the target report expects. Mentor-scoped reports include `ai-mentor-chat-history`, `my-chat-history`, and `recommendation-history-report`. The response is a status object with `report_id`, `report_name`, `state`, `started_on`, `owner`, `expires`, and `poll_timeout`. See `## Reads → Data Reports` for poll and download.
+
 ## Example
 
-Org-wide Messages/Topics/Conversations KPIs (omit `mentor_unique_id`), then the
-same scoped to one agent:
+Platform-wide messages/topics KPIs, then the same metric scoped to one agent:
 
 ```bash
 curl -s "https://api.iblai.app/dm/api/analytics/topics/?date_filter=30d&platform_key=$IBLAI_ORG" \
@@ -138,11 +219,40 @@ curl -s "https://api.iblai.app/dm/api/analytics/topics/?date_filter=30d&platform
   -H "Authorization: Api-Token $IBLAI_API_KEY"
 ```
 
+End-to-end chat-history Report — generate, poll, download:
+
+```bash
+# 1. Kick off
+REPORT=$(curl -s -X POST "https://api.iblai.app/dm/api/reports/platforms/$IBLAI_ORG/new" \
+  -H "Authorization: Api-Token $IBLAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"report_name":"ai-mentor-chat-history","mentor":"'"$MENTOR"'","start_date":"2026-06-01","end_date":"2026-06-30"}')
+NAME=$(echo "$REPORT" | jq -r '.data.status.report_name')
+
+# 2. Poll
+while true; do
+  STATUS=$(curl -s "https://api.iblai.app/dm/api/reports/platforms/$IBLAI_ORG/$NAME?mentor_unique_id=$MENTOR" \
+    -H "Authorization: Api-Token $IBLAI_API_KEY")
+  STATE=$(echo "$STATUS" | jq -r '.data.state')
+  [ "$STATE" = "completed" ] && break
+  [ "$STATE" = "error" ] || [ "$STATE" = "cancelled" ] || [ "$STATE" = "expired" ] && { echo "failed: $STATE"; exit 1; }
+  sleep 5
+done
+
+# 3. Download
+TASK=$(echo "$STATUS" | jq -r '.data.report_id')
+curl -s "https://api.iblai.app/dm/api/reports/platforms/$IBLAI_ORG/$TASK/download?format=csv" \
+  -H "Authorization: Api-Token $IBLAI_API_KEY" \
+  -o chat-history.csv
+```
+
 ## Notes
 
-- Same endpoints serve agent and org/content scope — the presence of
-  `mentor_unique_id` is the only difference.
+- `mentor_unique_id` alone toggles agent scope versus platform scope.
 - `date_filter=custom` requires both `start_date` and `end_date` (`yyyy-MM-dd`).
-- `usergroup_ids` narrows any chart (and a report) to specific user groups.
-- For *finding* agents/content use `/iblai-search`; for recommendations use
-  `/iblai-search`.
+- `learner/details` takes no trailing slash — Django's URL registration matches exactly.
+- `learners/list/` requires `platform_key` in the query string.
+- `financial/`, `financial/details/`, `content/details/`, and `messages/details/` each require one parameter (see the tables). The schema returns `400` if omitted.
+- Report state `expired` means the download is gone; re-`POST` `/new` to regenerate.
+- The download endpoint streams — expect a large body on chat-history reports.
+- To discover agents, courses, programs, or users, see `/iblai-search`. For a user's own profile view of their analytics, use `/iblai-profile`.
