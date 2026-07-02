@@ -1,6 +1,6 @@
 ---
 name: iblai-api-search
-description: Discover agents and learning content in an ibl.ai organization via the platform API — faceted, paginated search over agents and the catalog (courses, programs, pathways, skills), personalized (RAG) recommendations, global/personalized mentor search, and seller-facing sellable-items search; plus admin management of the recommendation prompts. Use to find, browse, or get recommended agents/content (mostly read-only; recommendation-prompt endpoints write).
+description: Discover agents and learning content in an ibl.ai organization via the platform API — faceted, paginated search over agents and the catalog (courses, programs, pathways, skills), personalized (RAG) recommendations, global/personalized agent search, and seller-facing sellable-items search; plus admin management of the recommendation prompts. Use to find, browse, or get recommended agents/content (mostly read-only; recommendation-prompt endpoints write).
 ---
 
 # iblai-api-search
@@ -9,7 +9,7 @@ Discover agents and learning content from the API in three ways: **agent**
 search (faceted, full-text search over agents), **content** search
 (faceted search over the catalog of courses, programs, pathways, and skills),
 and **recommendations** (personalized, RAG-ranked results for the signed-in
-user) — plus a newer `/api/ai-search/...` family (global + personalized mentor
+user) — plus a newer `/api/ai-search/...` family (global + personalized agent
 search, sellable-items search, and admin recommendation-prompt management).
 Discovery is read-only; only the recommendation-prompt endpoints write. To
 *edit* an agent use the `/iblai-api-agent-*` skills.
@@ -70,7 +70,7 @@ Returns a ranked list of the requested type. Call once per type for a mixed set.
 A newer `/api/ai-search/...` family (no org/user in the path — context comes from
 the token or query params). The `recommendations/` endpoint above is part of it.
 
-### Global mentor search
+### Global agent search
 
 - **GET** `https://api.iblai.app/dm/api/ai-search/mentors/` — global agent/mentor
   search across the platform. Works **anonymously**; if a token is sent, results
@@ -79,10 +79,10 @@ the token or query params). The `recommendations/` endpoint above is part of it.
   `limit`/`offset` pagination. Distinct from the org-pathed agent search above
   (that one is tenant-scoped; this one is global).
 
-### Personalized mentors
+### Personalized agents
 
 - **GET** `https://api.iblai.app/dm/api/ai-search/personalized-mentors/` —
-  personalized, mentor-focused results for the signed-in user (authentication
+  personalized, agent-focused results for the signed-in user (authentication
   required). Pass `platform_key` (or `tenant`) and, where applicable, `username`.
 
 ### Sellable items

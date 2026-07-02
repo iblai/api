@@ -1,6 +1,6 @@
 ---
 name: iblai-api-billing
-description: Operate an ibl.ai organization's billing surface via the platform API — credit accounts (balance, auto-recharge, manual top-up), transaction history, generic item paywalls (config + price tiers), Stripe Connect checkout (authenticated and guest), subscriptions, access checks, public pricing, and platform reporting (subscribers, revenue, paywalls). Generic item_type/item_id model: any sellable item (mentor, course, program, pathway, or custom). Use when reading credit balances, configuring an item's paywall and prices, generating a checkout link, checking access, or pulling subscriber/revenue reports.
+description: Operate an ibl.ai organization's billing surface via the platform API — credit accounts (balance, auto-recharge, manual top-up), transaction history, generic item paywalls (config + price tiers), Stripe Connect checkout (authenticated and guest), subscriptions, access checks, public pricing, and platform reporting (subscribers, revenue, paywalls). Generic item_type/item_id model: any sellable item (agent, course, program, pathway, or custom). Use when reading credit balances, configuring an item's paywall and prices, generating a checkout link, checking access, or pulling subscriber/revenue reports.
 ---
 
 # iblai-api-billing
@@ -10,7 +10,7 @@ the API: credit accounts (display balance, auto-recharge preferences, manual
 top-up), transaction history, per-item paywall configuration and price tiers,
 Stripe-Connect checkout (authenticated + guest), subscriptions, access checks,
 public pricing, and platform-wide reporting. Paywalls are **generic**: every
-endpoint keys off `item_type` + `item_id`, so the same surface sells mentors,
+endpoint keys off `item_type` + `item_id`, so the same surface sells agents,
 courses, programs, pathways, or any custom item type. Use when reading a credit
 balance, enabling a paywall and adding prices, generating a checkout link,
 checking whether a user has access, or pulling subscriber/revenue reports.
@@ -26,7 +26,7 @@ checking whether a user has access, or pulling subscriber/revenue reports.
 - **Path vars:** `{platform_key}` = `$IBLAI_ORG` (the org key; also called
   `org` / `platform_org` elsewhere on the wire). `{item_type}` = the item kind
   (`mentor`, `course`, `program`, `pathway`, or a custom type — see Notes).
-  `{item_id}` = the item's identifier (e.g. a mentor slug, course id, or
+  `{item_id}` = the item's identifier (e.g. a agent slug, course id, or
   `config`/`price` UUID for the by-id variants).
 - DELETE / destructive / outward-facing calls (paywall writes, price create/
   update/delete, checkout, subscribe, cancel) say "Confirm with the user
@@ -253,7 +253,7 @@ curl -X POST \
   `pathway`. Any other value is normalized to a `custom:<slug>` namespace
   (e.g. `workshop` → `custom:workshop`); the type must start with a letter
   after slugification or the request `400`s. Do not treat this as a
-  mentor-only paywall — it is the generic item-paywall surface for any sellable
+  agent-only paywall — it is the generic item-paywall surface for any sellable
   item.
 - **Stripe Connect is required** for monetary operations. Enabling a paywall,
   creating/updating prices, and checkout all need the platform's Stripe Connect

@@ -1,6 +1,6 @@
 ---
 name: iblai-api-milestone
-description: Read and write an ibl.ai organization's catalog milestones via the platform API — course, resource, program, and pathway completions, plus skill points at block, course, platform, and user level (including bulk and group updates). Use when querying or recording learner progress and skill-point totals.
+description: Read and write an ibl.ai organization's catalog milestones via the platform API — course, resource, program, and pathway completions, plus skill points at block, course, platform, and user level (including bulk and group updates). Use when querying or recording user progress and skill-point totals.
 ---
 
 # iblai-api-milestone
@@ -8,7 +8,7 @@ description: Read and write an ibl.ai organization's catalog milestones via the 
 Read and write an organization's **catalog milestones**: completion records for
 courses, resources, programs, and pathways, and skill points scoped to a block,
 a course, the platform, or a user (with bulk and group updates). Use when
-querying or recording learner progress and skill-point totals.
+querying or recording user progress and skill-point totals.
 
 ## Auth & conventions
 
@@ -114,7 +114,7 @@ querying or recording learner progress and skill-point totals.
 
 ## Example
 
-Look up a learner's course completion:
+Look up a user's course completion:
 
 ```bash
 curl -G \

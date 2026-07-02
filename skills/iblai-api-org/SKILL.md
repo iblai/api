@@ -37,7 +37,7 @@ Chat Area Width, and the feature toggles. Use when configuring org-wide behavior
     }
   }
   ```
-  - **Default Agent** → `overall_default_mentor` (mentor `unique_id` or `"none"`)
+  - **Default Agent** → `overall_default_mentor` (agent `unique_id` or `"none"`)
   - **Help Center URL** → `help_center_url` (string)
   - **Chat Area Width** → `chat_area_size` (string)
   - **Help Menu** / **Accessibility Menu** / **Persistent Chat Input Label** /
@@ -66,7 +66,7 @@ curl -X PUT \
 
 - The PUT replaces the metadata object — always GET first, merge your one key,
   and resend the full object so existing settings survive.
-- `overall_default_mentor` takes a mentor `unique_id` from the mentor-source
+- `overall_default_mentor` takes a agent `unique_id` from the mentor-source
   endpoint, or the literal string `"none"` to clear it.
 - The toggle keys (Help Menu, Accessibility Menu, Persistent Chat Input Label,
   Community Agents, Report Inappropriate Content) are slugs assigned by the
