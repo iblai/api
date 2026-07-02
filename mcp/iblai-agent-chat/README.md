@@ -1,6 +1,6 @@
 # iblai-agent-chat
 
-MCP (Model Context Protocol) server for ibl.ai mentor chat interactions, enabling AI assistants to communicate with configured AI mentors.
+MCP (Model Context Protocol) server for ibl.ai agent chat interactions, enabling AI assistants to communicate with configured AI agents.
 
 **Base URL:** `https://asgi.data.iblai.app` (or your ibl.ai deployment)
 
@@ -8,22 +8,22 @@ MCP (Model Context Protocol) server for ibl.ai mentor chat interactions, enablin
 
 ## Overview
 
-The iblai-agent-chat server provides a bridge between MCP-compatible AI assistants (like Claude) and ibl.ai's mentor system. This allows users to interact with specialized AI mentors configured for specific domains, courses, or purposes through their preferred AI assistant interface.
+The iblai-agent-chat server provides a bridge between MCP-compatible AI assistants (like Claude) and ibl.ai's agent system. This allows users to interact with specialized AI agents configured for specific domains, courses, or purposes through their preferred AI assistant interface.
 
 ## Configuration
 
 ### Authentication
 
-The server uses Api-Token authentication via the `Authorization` header, plus a mentor identifier. You need:
+The server uses Api-Token authentication via the `Authorization` header, plus a agent identifier. You need:
 1. A Platform API Key from your ibl.ai admin panel
-2. The mentor's unique ID via the `X-Mentor-Unique-Id` header
+2. The agent's unique ID via the `X-Mentor-Unique-Id` header
 
 ### Required Headers
 
 | Header | Description | Required |
 |--------|-------------|----------|
 | `Authorization` | Api-Token for authentication | Yes |
-| `X-Mentor-Unique-Id` | Unique identifier of the mentor to interact with | Yes |
+| `X-Mentor-Unique-Id` | Unique identifier of the agent to interact with | Yes |
 
 ## Usage
 
@@ -60,12 +60,12 @@ claude mcp add iblai-agent-chat --transport http https://asgi.data.iblai.app/mcp
 
 ### `get_mentor_response`
 
-Send a prompt to the configured mentor and receive a response.
+Send a prompt to the configured agent and receive a response.
 
 **Parameters:**
-- `prompt`: The message or question to send to the mentor (required)
+- `prompt`: The message or question to send to the agent (required)
 
-**Returns:** The mentor's response as a string
+**Returns:** The agent's response as a string
 
 **Example Usage:**
 
@@ -80,14 +80,14 @@ Response: "Machine learning encompasses several key concepts..."
 ## How It Works
 
 1. **Authentication**: The server validates the user's Bearer token against ibl.ai's authentication system
-2. **Mentor Resolution**: The `X-Mentor-Unique-Id` header identifies which mentor to route the conversation to
-3. **LLM Invocation**: The prompt is processed through ibl.ai's LLM service with the mentor's configured context, system prompts, and knowledge base
-4. **Response**: The mentor's response is returned through the MCP tool
+2. **Agent Resolution**: The `X-Mentor-Unique-Id` header identifies which agent to route the conversation to
+3. **LLM Invocation**: The prompt is processed through ibl.ai's LLM service with the agent's configured context, system prompts, and knowledge base
+4. **Response**: The agent's response is returned through the MCP tool
 
-## Mentor Configuration
+## Agent Configuration
 
-Mentors in ibl.ai can be configured with:
-- **System prompts**: Define the mentor's personality and behavior
+Agents in ibl.ai can be configured with:
+- **System prompts**: Define the agent's personality and behavior
 - **Knowledge bases**: Connect documents, courses, or custom data
 - **LLM models**: Choose the underlying language model
 - **Guardrails**: Set content policies and response filters
@@ -97,25 +97,25 @@ Mentors in ibl.ai can be configured with:
 
 ### Educational Assistance
 
-Connect to a course-specific mentor for tutoring:
+Connect to a course-specific agent for tutoring:
 
 > "Can you explain the concept of recursion with a simple example?"
 
 ### Customer Support
 
-Route queries to a product knowledge mentor:
+Route queries to a product knowledge agent:
 
 > "How do I configure the integration settings?"
 
 ### Domain Expertise
 
-Interact with specialized mentors:
+Interact with specialized agents:
 
 > "What are the compliance requirements for GDPR?"
 
 ### Multi-Mentor Workflows
 
-Configure multiple mentor connections for different tasks:
+Configure multiple agent connections for different tasks:
 
 ```json
 {
@@ -140,33 +140,33 @@ Configure multiple mentor connections for different tasks:
 }
 ```
 
-## Finding Your Mentor ID
+## Finding Your Agent ID
 
-To find a mentor's unique ID:
+To find a agent's unique ID:
 
-1. **Via ibl.ai Dashboard**: Navigate to Mentors → Select Mentor → Copy the Unique ID from settings
-2. **Via API**: Use the mentor list endpoint: `GET /api/ai-mentor/orgs/{org}/users/{user_id}/mentors/`
-3. **Via iblai-search**: Use the mentor search tools to discover mentors and their IDs
+1. **Via ibl.ai Dashboard**: Navigate to Agents → Select Agent → Copy the Unique ID from settings
+2. **Via API**: Use the agent list endpoint: `GET /api/ai-mentor/orgs/{org}/users/{user_id}/mentors/`
+3. **Via iblai-search**: Use the agent search tools to discover agents and their IDs
 
 ## Error Handling
 
 | Error | Description | Resolution |
 |-------|-------------|------------|
-| "Could not authenticate mentor via X-Mentor-Unique-Id" | Invalid or missing mentor ID | Verify the mentor ID in the header |
+| "Could not authenticate agent via X-Mentor-Unique-Id" | Invalid or missing agent ID | Verify the agent ID in the header |
 | 401 Unauthorized | Invalid Bearer token | Re-authenticate with valid credentials |
-| 403 Forbidden | User lacks access to this mentor | Check mentor permissions |
+| 403 Forbidden | User lacks access to this agent | Check agent permissions |
 | 500 Server Error | Internal processing error | Contact support |
 
 ## Best Practices
 
-1. **Use Specific Mentors**: Configure separate mentor connections for different use cases
+1. **Use Specific Agents**: Configure separate agent connections for different use cases
 2. **Handle Errors Gracefully**: Implement fallback logic for authentication failures
-3. **Monitor Usage**: Track mentor interactions via the analytics MCP
-4. **Secure Credentials**: Store Bearer tokens and mentor IDs securely
+3. **Monitor Usage**: Track agent interactions via the analytics MCP
+4. **Secure Credentials**: Store Bearer tokens and agent IDs securely
 
 ## Rate Limiting
 
-The mentor chat service may be subject to rate limiting based on:
+The agent chat service may be subject to rate limiting based on:
 - User tier
 - Organization quotas
 - LLM provider limits
@@ -177,9 +177,9 @@ Check with your ibl.ai administrator for specific limits.
 
 | Server | Description |
 |--------|-------------|
-| [iblai-analytics](../iblai-analytics) | Monitor mentor usage and costs |
-| [iblai-search](../iblai-search) | Discover available mentors |
-| [iblai-agent-create](../iblai-agent-create) | Create and manage AI mentors |
+| [iblai-analytics](../iblai-analytics) | Monitor agent usage and costs |
+| [iblai-search](../iblai-search) | Discover available agents |
+| [iblai-agent-create](../iblai-agent-create) | Create and manage AI agents |
 
 ## License
 
