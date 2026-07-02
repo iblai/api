@@ -30,7 +30,7 @@ Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 npx skills add iblai/api
 ```
 
-This installs skills that teach your AI agent how to **drive the ibl.ai platform REST API directly** — configure agents, manage datasets and memory, administer users and roles, send notifications, and pull analytics — for any organization you belong to. You'll now have the `/iblai-*` commands in your agent.
+This installs skills that teach your AI agent how to **drive the ibl.ai platform REST API directly** — configure agents, manage datasets and memory, administer users and roles, send notifications, and pull analytics — for any organization you belong to. You'll now have the `/iblai-api-*` commands in your agent.
 
 ### 2. Get signed in
 
@@ -44,12 +44,12 @@ You need an ibl.ai account with your own organization. Two ways in:
 Run the login skill once. It reads your signed-in session from `login.iblai.app/me`, asks which organization to use, and writes your **org key**, **username**, and a **Platform API Token** to `.env`:
 
 ```text
-/iblai-login
+/iblai-api-login
 ```
 
 Every other skill then reads `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` from `.env` and calls `https://api.iblai.app` with `Authorization: Api-Token <key>`.
 
-> **Headless / CI? Already have org credentials (key + secret)?** Skip the browser. An **org secret** works directly as the Api-Token — set `IBLAI_ORG=<org key>` and `IBLAI_API_KEY=<org secret>`, then read `IBLAI_USERNAME` from the API (an `is_admin` user on the org). `/iblai-login` documents this path under [Fastest path — org credentials](skills/iblai-login/SKILL.md).
+> **Headless / CI? Already have org credentials (key + secret)?** Skip the browser. An **org secret** works directly as the Api-Token — set `IBLAI_ORG=<org key>` and `IBLAI_API_KEY=<org secret>`, then read `IBLAI_USERNAME` from the API (an `is_admin` user on the org). `/iblai-api-login` documents this path under [Fastest path — org credentials](skills/iblai-api-login/SKILL.md).
 
 ## What is iblai/api
 
@@ -57,7 +57,7 @@ A toolkit for operating the [ibl.ai](https://ibl.ai) platform from your AI agent
 
 **Why it matters:**
 
-- **One skill per operation** — each `/iblai-*` skill maps one capability, so changing an agent's LLM or pulling cost analytics is a `/` command, not a docs hunt
+- **One skill per operation** — each `/iblai-api-*` skill maps one capability, so changing an agent's LLM or pulling cost analytics is a `/` command, not a docs hunt
 - **Any organization** — authenticate once via `login.iblai.app/me`, then target any of your organizations by org key + Api-Token
 - **Endpoint-accurate** — skills carry the real `api.iblai.app` request shapes, so your agent calls the platform correctly the first time
 - **Runtime chat included** — a hosted Model Context Protocol server for chatting with deployed agents (streamed responses, tool use, RAG) — no local install
@@ -66,8 +66,8 @@ A toolkit for operating the [ibl.ai](https://ibl.ai) platform from your AI agent
 ## How It Works
 
 1. **Install** — `npx skills add iblai/api` drops the skills into your project.
-2. **Connect** — run `/iblai-login` to capture your org + username from `login.iblai.app/me` and store an Api-Token in `.env`.
-3. **Operate** — invoke any `/iblai-*` skill; it fills in your org, username, and (where relevant) the agent id, then calls `api.iblai.app`.
+2. **Connect** — run `/iblai-api-login` to capture your org + username from `login.iblai.app/me` and store an Api-Token in `.env`.
+3. **Operate** — invoke any `/iblai-api-*` skill; it fills in your org, username, and (where relevant) the agent id, then calls `api.iblai.app`.
 4. **Automate** — chain skills, or connect the hosted chat MCP server to your assistant to talk to agents at runtime.
 
 ## Skills
@@ -77,95 +77,95 @@ After installing, use these directly in your AI agent with `/` commands.
 ### Setup
 
 ```text
-/iblai-login
+/iblai-api-login
 ```
 
 ### Agent
 
 ```text
-/iblai-agent-create        /iblai-agent-datasets
-/iblai-agent-settings      /iblai-agent-embed
-/iblai-agent-sandbox       /iblai-agent-memory
-/iblai-agent-access        /iblai-agent-history
-/iblai-agent-llm           /iblai-agent-audit
-/iblai-agent-prompts       /iblai-agent-evals
-/iblai-agent-skills        /iblai-agent-chat
-/iblai-agent-safety        /iblai-agent-disclaimers
-/iblai-agent-privacy       /iblai-agent-tools
-/iblai-agent-mcp
+/iblai-api-agent-create        /iblai-api-agent-dataset
+/iblai-api-agent-setting      /iblai-api-agent-embed
+/iblai-api-agent-sandbox       /iblai-api-agent-memory
+/iblai-api-agent-access        /iblai-api-agent-history
+/iblai-api-agent-llm           /iblai-api-agent-audit
+/iblai-api-agent-prompt       /iblai-api-agent-eval
+/iblai-api-agent-skill        /iblai-api-agent-chat
+/iblai-api-agent-safety        /iblai-api-agent-disclaimer
+/iblai-api-agent-privacy       /iblai-api-agent-tool
+/iblai-api-agent-mcp
 ```
 
 ### Organization (platform admin)
 
 ```text
-/iblai-org                 /iblai-rbac
-/iblai-management       /iblai-crm
-/iblai-integrations     /iblai-notifications
-/iblai-tokens          /iblai-invites
-/iblai-scim            /iblai-billing
-/iblai-features
+/iblai-api-org                 /iblai-api-rbac
+/iblai-api-management       /iblai-api-crm
+/iblai-api-integration     /iblai-api-notification
+/iblai-api-token          /iblai-api-invite
+/iblai-api-scim            /iblai-api-billing
+/iblai-api-feature
 ```
 
 ### Profile
 
 ```text
-/iblai-profile             /iblai-profile-metadata
+/iblai-api-profile             /iblai-api-profile-metadata
 ```
 
 ### Content & discovery
 
 ```text
-/iblai-search              /iblai-course-create
-/iblai-analytics           /iblai-catalog
-/iblai-milestones          /iblai-credentials
-/iblai-catalog-media       /iblai-catalog-invitations
+/iblai-api-search              /iblai-api-course-create
+/iblai-api-analytics           /iblai-api-catalog
+/iblai-api-milestone          /iblai-api-credential
+/iblai-api-catalog-media       /iblai-api-catalog-invitation
 ```
 
 ### What each skill does
 
 | Skill | Description |
 |-------|-------------|
-| `/iblai-login` | Connect an organization — opens `login.iblai.app/me`, captures org + username + Api-Token into `.env`. Run first. |
-| `/iblai-agent-create` | Create a new agent from a template (then configure with the other agent skills) |
-| `/iblai-agent-settings` | Agent identity & capabilities — name, description, category, image, visibility, flags; fork and delete |
-| `/iblai-agent-sandbox` | Connect/disconnect a sandbox (Claw) instance, push config, run health checks, set the model |
-| `/iblai-agent-access` | Role-based access to an agent — grant editor / chat / analytics_viewer to users, groups, emails |
-| `/iblai-agent-llm` | Choose the agent's LLM provider and model |
-| `/iblai-agent-prompts` | System / proactive / study / guided prompts and suggested-prompt CRUD |
-| `/iblai-agent-skills` | Browse the skill catalog and assign skills to an agent (requires a sandbox) |
-| `/iblai-agent-safety` | Moderation & safety systems, prompts/responses, and flagged-prompt logs |
-| `/iblai-agent-privacy` | Privacy Router — PII detection, redact/mask/block, entity types, output filtering |
-| `/iblai-agent-disclaimers` | Advisory text and the User Agreement |
-| `/iblai-agent-tools` | Enable/disable the agent's tools |
-| `/iblai-agent-mcp` | MCP connectors — create, edit, enable, and complete OAuth connections |
-| `/iblai-agent-datasets` | Training datasets (RAG) — add files/URLs/YouTube/crawl/GitHub, train, retrain, delete |
-| `/iblai-agent-embed` | Embed/widget settings + backend token provisioning — CSS/JS, voice, SSO, share links |
-| `/iblai-agent-memory` | Agent memories and memory categories — list, filter, add, edit, delete |
-| `/iblai-agent-history` | Conversation history & summaries; export chat history as an async report |
-| `/iblai-agent-audit` | Agent audit log — who changed what (read-only) |
-| `/iblai-agent-evals` | Agent evaluations — datasets, experiments, LLM-as-Judge + human scoring, CSV export |
-| `/iblai-agent-chat` | Set up live chat with an agent — wires the `iblai-agent-chat` MCP server into the project |
-| `/iblai-org` | Org-wide settings — default agent, help center URL, chat width, feature toggles |
-| `/iblai-management` | Org admin — Users, Groups, Roles, Policies, Teams, Alerts |
-| `/iblai-rbac` | RBAC — roles, policies, groups, permission checks, agent/team sharing, student toggles |
-| `/iblai-crm` | CRM — people, organizations, pipelines, deals (move/won/lost), activities, tags |
-| `/iblai-integrations` | Account integrations — LLM keys, Data Source credentials, API tokens |
-| `/iblai-tokens` | Platform API Tokens — list, create (secret shown once), delete |
-| `/iblai-notifications` | Org notifications — counts, inbox, mark-as-read, build & send |
-| `/iblai-invites` | User invitations — list and send (single or CSV bulk) |
-| `/iblai-scim` | SCIM 2.0 directory provisioning — users (Enterprise extension), groups, departments, memberships; RBAC group assignment auto-links platforms |
-| `/iblai-billing` | Billing & credits — credit accounts, item paywalls, prices, checkout (auth + guest), subscriptions, access checks, revenue/subscriber reporting |
-| `/iblai-features` | Per-user feature config & flags — get/update (inline or feature+values), bulk-config, apps/onboarding, trial activation, platform provisioning |
-| `/iblai-profile` | The signed-in user's own profile — Basic, Social, Education, Experience, Resume, Memory |
-| `/iblai-profile-metadata` | Per-user, per-org metadata key-value store — preferences, settings, feature flags |
-| `/iblai-search` | Discover agents and content + personalized (RAG) recommendations — faceted search (read-only) |
-| `/iblai-analytics` | Analytics across agents, content, and users — KPIs, users, topics, transcripts, costs, courses, programs, audit, reports |
-| `/iblai-course-create` | Course Creation API — generate, edit, and publish courses (tasks, outline, structure) |
-| `/iblai-catalog` | Learning catalog — courses, programs, pathways, resources, skills/roles taxonomy, enrollment, eligibility, reviews |
-| `/iblai-milestones` | Catalog milestones — course/resource/program/pathway completions and skill points (block, course, platform, user) |
-| `/iblai-credentials` | Digital credentials — credential CRUD, user/group assignments, assertions, course import/export, provider config (Accredible), analytics |
-| `/iblai-catalog-media` | Catalog media resources — list/create/update/delete media tied to courses/units/items, multipart upload, search, by-item lookup |
-| `/iblai-catalog-invitations` | Catalog invitations & licensing — platform/course/program invitations (bulk, blank, redeem), licenses & assignments, access requests, suggestions |
+| `/iblai-api-login` | Connect an organization — opens `login.iblai.app/me`, captures org + username + Api-Token into `.env`. Run first. |
+| `/iblai-api-agent-create` | Create a new agent from a template (then configure with the other agent skills) |
+| `/iblai-api-agent-setting` | Agent identity & capabilities — name, description, category, image, visibility, flags; fork and delete |
+| `/iblai-api-agent-sandbox` | Connect/disconnect a sandbox (Claw) instance, push config, run health checks, set the model |
+| `/iblai-api-agent-access` | Role-based access to an agent — grant editor / chat / analytics_viewer to users, groups, emails |
+| `/iblai-api-agent-llm` | Choose the agent's LLM provider and model |
+| `/iblai-api-agent-prompt` | System / proactive / study / guided prompts and suggested-prompt CRUD |
+| `/iblai-api-agent-skill` | Browse the skill catalog and assign skills to an agent (requires a sandbox) |
+| `/iblai-api-agent-safety` | Moderation & safety systems, prompts/responses, and flagged-prompt logs |
+| `/iblai-api-agent-privacy` | Privacy Router — PII detection, redact/mask/block, entity types, output filtering |
+| `/iblai-api-agent-disclaimer` | Advisory text and the User Agreement |
+| `/iblai-api-agent-tool` | Enable/disable the agent's tools |
+| `/iblai-api-agent-mcp` | MCP connectors — create, edit, enable, and complete OAuth connections |
+| `/iblai-api-agent-dataset` | Training datasets (RAG) — add files/URLs/YouTube/crawl/GitHub, train, retrain, delete |
+| `/iblai-api-agent-embed` | Embed/widget settings + backend token provisioning — CSS/JS, voice, SSO, share links |
+| `/iblai-api-agent-memory` | Agent memories and memory categories — list, filter, add, edit, delete |
+| `/iblai-api-agent-history` | Conversation history & summaries; export chat history as an async report |
+| `/iblai-api-agent-audit` | Agent audit log — who changed what (read-only) |
+| `/iblai-api-agent-eval` | Agent evaluations — datasets, experiments, LLM-as-Judge + human scoring, CSV export |
+| `/iblai-api-agent-chat` | Set up live chat with an agent — wires the `iblai-api-agent-chat` MCP server into the project |
+| `/iblai-api-org` | Org-wide settings — default agent, help center URL, chat width, feature toggles |
+| `/iblai-api-management` | Org admin — Users, Groups, Roles, Policies, Teams, Alerts |
+| `/iblai-api-rbac` | RBAC — roles, policies, groups, permission checks, agent/team sharing, student toggles |
+| `/iblai-api-crm` | CRM — people, organizations, pipelines, deals (move/won/lost), activities, tags |
+| `/iblai-api-integration` | Account integrations — LLM keys, Data Source credentials, API tokens |
+| `/iblai-api-token` | Platform API Tokens — list, create (secret shown once), delete |
+| `/iblai-api-notification` | Org notifications — counts, inbox, mark-as-read, build & send |
+| `/iblai-api-invite` | User invitations — list and send (single or CSV bulk) |
+| `/iblai-api-scim` | SCIM 2.0 directory provisioning — users (Enterprise extension), groups, departments, memberships; RBAC group assignment auto-links platforms |
+| `/iblai-api-billing` | Billing & credits — credit accounts, item paywalls, prices, checkout (auth + guest), subscriptions, access checks, revenue/subscriber reporting |
+| `/iblai-api-feature` | Per-user feature config & flags — get/update (inline or feature+values), bulk-config, apps/onboarding, trial activation, platform provisioning |
+| `/iblai-api-profile` | The signed-in user's own profile — Basic, Social, Education, Experience, Resume, Memory |
+| `/iblai-api-profile-metadata` | Per-user, per-org metadata key-value store — preferences, settings, feature flags |
+| `/iblai-api-search` | Discover agents and content + personalized (RAG) recommendations — faceted search (read-only) |
+| `/iblai-api-analytics` | Analytics across agents, content, and users — KPIs, users, topics, transcripts, costs, courses, programs, audit, reports |
+| `/iblai-api-course-create` | Course Creation API — generate, edit, and publish courses (tasks, outline, structure) |
+| `/iblai-api-catalog` | Learning catalog — courses, programs, pathways, resources, skills/roles taxonomy, enrollment, eligibility, reviews |
+| `/iblai-api-milestone` | Catalog milestones — course/resource/program/pathway completions and skill points (block, course, platform, user) |
+| `/iblai-api-credential` | Digital credentials — credential CRUD, user/group assignments, assertions, course import/export, provider config (Accredible), analytics |
+| `/iblai-api-catalog-media` | Catalog media resources — list/create/update/delete media tied to courses/units/items, multipart upload, search, by-item lookup |
+| `/iblai-api-catalog-invitation` | Catalog invitations & licensing — platform/course/program invitations (bulk, blank, redeem), licenses & assignments, access requests, suggestions |
 
 Skills live in [`skills/`](./skills). Read them, extend them, or write your own.
 
@@ -195,7 +195,7 @@ verified against the real API — not against docs or guesswork. The full contra
 - **Describe APIs, not UIs.** Never reference menus, tabs, buttons, or pages — the
   value is the endpoint, not the screen it used to live behind.
 - **Follow the naming + terminology rules.** Skill scope is encoded by prefix
-  (`iblai-agent-*` = one agent, `iblai-profile*` = the signed-in user, bare names =
+  (`iblai-api-agent-*` = one agent, `iblai-api-profile*` = the signed-in user, bare names =
   org-wide). Use **org / org key** for a customer workspace, not "tenant" or
   "platform" (see the Terminology section in [`CLAUDE.md`](./CLAUDE.md)).
 
@@ -205,16 +205,16 @@ verification-first style expected.
 
 ## MCP Server
 
-Hosted Model Context Protocol server — no local installation required. This covers the one **runtime** capability the skills can't: actually talking to a deployed agent. Wire it up with **`/iblai-agent-chat`** (it writes the config below from your `.env` token + a chosen agent), or add it manually. (Administering the platform is the skills' job — see [Skills vs MCP servers](#skills-vs-mcp-servers).)
+Hosted Model Context Protocol server — no local installation required. This covers the one **runtime** capability the skills can't: actually talking to a deployed agent. Wire it up with **`/iblai-api-agent-chat`** (it writes the config below from your `.env` token + a chosen agent), or add it manually. (Administering the platform is the skills' job — see [Skills vs MCP servers](#skills-vs-mcp-servers).)
 
 | Server | Description | Endpoint |
 |--------|-------------|----------|
-| [iblai-agent-chat](./mcp/iblai-agent-chat) | Talk to a deployed agent — streamed AI responses (runtime) | `/mcp/agent-chat/` |
+| [iblai-api-agent-chat](./mcp/iblai-api-agent-chat) | Talk to a deployed agent — streamed AI responses (runtime) | `/mcp/agent-chat/` |
 
 ### Connect from Claude Code
 
 ```bash
-claude mcp add iblai-agent-chat --transport http https://asgi.data.iblai.app/mcp/agent-chat/ --header "Authorization: Api-Token YOUR_API_TOKEN"
+claude mcp add iblai-api-agent-chat --transport http https://asgi.data.iblai.app/mcp/agent-chat/ --header "Authorization: Api-Token YOUR_API_TOKEN"
 ```
 
 ### Connect from Claude Desktop / Cursor
@@ -222,7 +222,7 @@ claude mcp add iblai-agent-chat --transport http https://asgi.data.iblai.app/mcp
 ```json
 {
   "mcpServers": {
-    "iblai-agent-chat": {
+    "iblai-api-agent-chat": {
       "transport": "streamable-http",
       "url": "https://asgi.data.iblai.app/mcp/agent-chat/",
       "headers": {
@@ -240,7 +240,7 @@ The split is **administer/use-via-REST vs chat at runtime**:
 - **Skills** do everything you can reach over REST — create and configure agents, manage datasets, memory, users, roles, notifications, discovery/search, recommendations, user profiles and analytics, and reporting — by calling the API directly.
 - **The MCP server** is for the one thing that isn't a REST admin call: holding a live conversation with a deployed agent (streamed responses, tool use, RAG).
 
-**Rule: if a skill covers it, there is no server for it.** That's why only `iblai-agent-chat` remains — the former `analytics`, `agent-create`, `search`, and `user` servers were removed once skills covered analytics, agent creation, discovery + recommendations (`/iblai-search`), and user profile + analytics (`/iblai-profile`).
+**Rule: if a skill covers it, there is no server for it.** That's why only `iblai-api-agent-chat` remains — the former `analytics`, `agent-create`, `search`, and `user` servers were removed once skills covered analytics, agent creation, discovery + recommendations (`/iblai-api-search`), and user profile + analytics (`/iblai-api-profile`).
 
 ## Authentication
 
@@ -249,10 +249,10 @@ Everything authenticates the same way:
 - **Base URL:** `https://api.iblai.app`
 - **Header:** `Authorization: Api-Token <key>` on every request
 - **Org & username:** from [login.iblai.app/me](https://login.iblai.app/me) — each organization you belong to shows its **key** (e.g. `enterprise`, `iblai`, or a UUID)
-- **Api-Token:** `/iblai-login` mints your first token from your signed-in session; afterward `/iblai-tokens` lists, creates, and rotates tokens. The secret is shown once.
-- **Org credentials (key + secret):** for headless/CI use, an org **secret** is itself a valid Api-Token — set `IBLAI_API_KEY=<org secret>` and `IBLAI_ORG=<org key>` with no browser step. See [Fastest path — org credentials](skills/iblai-login/SKILL.md).
+- **Api-Token:** `/iblai-api-login` mints your first token from your signed-in session; afterward `/iblai-api-token` lists, creates, and rotates tokens. The secret is shown once.
+- **Org credentials (key + secret):** for headless/CI use, an org **secret** is itself a valid Api-Token — set `IBLAI_API_KEY=<org secret>` and `IBLAI_ORG=<org key>` with no browser step. See [Fastest path — org credentials](skills/iblai-api-login/SKILL.md).
 
-`/iblai-login` does all of this for you — get signed in (via [ibl.ai/join](https://ibl.ai/join) if you're new, or [login.iblai.app/me](https://login.iblai.app/me) if you have an account), then run it and it writes `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` to `.env`. Never commit `.env` — it is in `.gitignore`.
+`/iblai-api-login` does all of this for you — get signed in (via [ibl.ai/join](https://ibl.ai/join) if you're new, or [login.iblai.app/me](https://login.iblai.app/me) if you have an account), then run it and it writes `IBLAI_ORG`, `IBLAI_USERNAME`, and `IBLAI_API_KEY` to `.env`. Never commit `.env` — it is in `.gitignore`.
 
 ## Resources
 
