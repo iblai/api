@@ -222,7 +222,7 @@ claude mcp add iblai-api-agent-chat --transport http https://asgi.data.iblai.app
 ```json
 {
   "mcpServers": {
-    "iblai-api-agent-chat": {
+    "iblai-agent-chat": {
       "transport": "streamable-http",
       "url": "https://asgi.data.iblai.app/mcp/agent-chat/",
       "headers": {

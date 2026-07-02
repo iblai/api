@@ -47,7 +47,7 @@ token and `unique_id` — do not commit secrets:
 ```json
 {
   "mcpServers": {
-    "iblai-api-agent-chat": {
+    "iblai-agent-chat": {
       "transport": "streamable-http",
       "url": "https://asgi.data.iblai.app/mcp/agent-chat/",
       "headers": {
