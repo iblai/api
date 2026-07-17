@@ -6,7 +6,7 @@
 
 Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 
-[![Skills](https://img.shields.io/badge/Skills-43-CC785C)](https://skills.sh/iblai/api)
+[![Skills](https://img.shields.io/badge/Skills-42-CC785C)](https://skills.sh/iblai/api)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-CC785C?logoColor=white)](https://claude.ai)
 [![Cursor](https://img.shields.io/badge/Cursor-000000)](https://cursor.com)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
@@ -103,7 +103,7 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-api-integration     /iblai-api-notification
 /iblai-api-token          /iblai-api-invite
 /iblai-api-scim            /iblai-api-billing
-/iblai-api-feature         /iblai-api-mcp-configuration
+/iblai-api-feature
 ```
 
 ### Profile
@@ -138,7 +138,7 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-agent-privacy` | Privacy Router — PII detection, redact/mask/block, entity types, output filtering |
 | `/iblai-api-agent-disclaimer` | Advisory text and the User Agreement |
 | `/iblai-api-agent-tool` | Enable/disable the agent's tools |
-| `/iblai-api-agent-mcp` | MCP connectors — create, edit, enable, and complete OAuth connections |
+| `/iblai-api-agent-mcp` | MCP connectors end to end — register servers, credential connections (org/agent/per-user auth patterns), agent wiring, OAuth connected services, in-chat OAuth events, troubleshooting |
 | `/iblai-api-agent-dataset` | Training datasets (RAG) — add files/URLs/YouTube/crawl/GitHub, train, retrain, delete |
 | `/iblai-api-agent-embed` | Embed/widget settings + backend token provisioning — CSS/JS, voice, SSO, share links |
 | `/iblai-api-agent-memory` | Agent memories and memory categories — list, filter, add, edit, delete |
@@ -157,7 +157,6 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-scim` | SCIM 2.0 directory provisioning — users (Enterprise extension), groups, departments, memberships; RBAC group assignment auto-links platforms |
 | `/iblai-api-billing` | Billing & credits — credit accounts, item paywalls, prices, checkout (auth + guest), subscriptions, access checks, revenue/subscriber reporting |
 | `/iblai-api-feature` | Per-user feature config & flags — get/update (inline or feature+values), bulk-config, apps/onboarding, trial activation, platform provisioning |
-| `/iblai-api-mcp-configuration` | Deep MCP configuration — auth patterns (org / agent / per-user credentials), connection validation, runtime credential resolution, in-chat OAuth events, troubleshooting |
 | `/iblai-api-profile` | The signed-in user's own profile — Basic, Social, Education, Experience, Resume, Memory |
 | `/iblai-api-profile-metadata` | Per-user, per-org metadata key-value store — preferences, settings, feature flags |
 | `/iblai-api-search` | Discover agents and content + personalized (RAG) recommendations — faceted search (read-only) |
