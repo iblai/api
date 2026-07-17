@@ -37,7 +37,7 @@ external services. Use when wiring an agent to external MCP servers and tools.
     "auth_type": "none|token|oauth2 (required)",
     "description": "string",
     "credentials": "string",
-    "auth_scope": "user|mentor|tenant",
+    "auth_scope": "user|mentor|platform",
     "mentor": "uuid|null",
     "image": "File"
   }
@@ -56,7 +56,7 @@ external services. Use when wiring an agent to external MCP servers and tools.
   ```json
   {
     "server": "number (required)",
-    "scope": "user|mentor|tenant (required)",
+    "scope": "user|mentor|platform (required)",
     "auth_type": "oauth2 (required)",
     "connected_service": "number (required)",
     "user": "string",
@@ -92,5 +92,10 @@ curl -X POST \
 - OAuth is two steps: **GET** the connected-services start endpoint for an
   `auth_url`, let the user complete it, then **POST** `mcp-server-connections/`
   with the resulting `connected_service`.
-- `auth_scope` / `scope` (`user|mentor|tenant`) controls who the connection
-  applies to — `user` is per-user, `mentor` is agent-wide, `tenant` is org-wide.
+- `auth_scope` / `scope` (`user|mentor|platform`) controls who the connection
+  applies to — `user` is per-user, `mentor` is agent-wide, `platform` is
+  org-wide. (The wire value is `platform`, not `tenant`; sending `tenant`
+  fails choice validation.)
+- The deep guide — auth-pattern selection, connection validation rules,
+  runtime credential resolution, in-chat per-user OAuth, troubleshooting —
+  is `/iblai-api-mcp-configuration`.

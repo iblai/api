@@ -157,7 +157,7 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-scim` | SCIM 2.0 directory provisioning — users (Enterprise extension), groups, departments, memberships; RBAC group assignment auto-links platforms |
 | `/iblai-api-billing` | Billing & credits — credit accounts, item paywalls, prices, checkout (auth + guest), subscriptions, access checks, revenue/subscriber reporting |
 | `/iblai-api-feature` | Per-user feature config & flags — get/update (inline or feature+values), bulk-config, apps/onboarding, trial activation, platform provisioning |
-| `/iblai-api-mcp-configuration` | MCP servers & OAuth connectors — register MCP servers, manage connections (platform/agent/user scoped), wire agents to servers, per-user in-chat OAuth, connected services |
+| `/iblai-api-mcp-configuration` | Deep MCP configuration — auth patterns (org / agent / per-user credentials), connection validation, runtime credential resolution, in-chat OAuth events, troubleshooting |
 | `/iblai-api-profile` | The signed-in user's own profile — Basic, Social, Education, Experience, Resume, Memory |
 | `/iblai-api-profile-metadata` | Per-user, per-org metadata key-value store — preferences, settings, feature flags |
 | `/iblai-api-search` | Discover agents and content + personalized (RAG) recommendations — faceted search (read-only) |
