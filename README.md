@@ -6,7 +6,7 @@
 
 Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 
-[![Skills](https://img.shields.io/badge/Skills-33-CC785C)](https://skills.sh/iblai/api)
+[![Skills](https://img.shields.io/badge/Skills-43-CC785C)](https://skills.sh/iblai/api)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-CC785C?logoColor=white)](https://claude.ai)
 [![Cursor](https://img.shields.io/badge/Cursor-000000)](https://cursor.com)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
@@ -119,6 +119,7 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-api-analytics           /iblai-api-catalog
 /iblai-api-milestone          /iblai-api-credential
 /iblai-api-catalog-media       /iblai-api-catalog-invitation
+/iblai-api-apply
 ```
 
 ### What each skill does
@@ -166,6 +167,7 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-credential` | Digital credentials — credential CRUD, user/group assignments, assertions, course import/export, provider config (Accredible), analytics |
 | `/iblai-api-catalog-media` | Catalog media resources — list/create/update/delete media tied to courses/units/items, multipart upload, search, by-item lookup |
 | `/iblai-api-catalog-invitation` | Catalog invitations & licensing — platform/course/program invitations (bulk, blank, redeem), licenses & assignments, access requests, suggestions |
+| `/iblai-api-apply` | Application gate — applicant apply/renew/submit flows (drafts, files, fees, withdrawal), reviewer pipeline with per-student decisions, waivers & admin override, placement tests, course assignments, account provisioning, form authoring |
 
 Skills live in [`skills/`](./skills). Read them, extend them, or write your own.
 
