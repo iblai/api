@@ -99,6 +99,16 @@ DELETE is destructive — confirm with the user first.
 - **PATCH** `/api/crm/persons/{id}/` — update a person.
 - **DELETE** `/api/crm/persons/{id}/` — delete a person. Confirm with the user first.
 
+**Person actions:**
+
+- **POST** `/api/crm/persons/merge/` — merge duplicates into one: body
+  `{ "primary_id": UUID, "duplicate_ids": [UUID, …] }`; reparents the duplicates'
+  deals / activities / tags onto the primary. Destructive — confirm first.
+- **POST** `/api/crm/persons/{id}/invite/` — invite the person as a platform user:
+  body `{ "is_admin": bool, "is_staff": bool, "redirect_to": "url" }`.
+- **POST** `/api/crm/persons/{id}/link-user/` — link the CRM person to an existing
+  platform user (sets `platform_user`).
+
 ### Organization
 
 - **POST** `/api/crm/organizations/` — create an organization.
@@ -142,6 +152,7 @@ DELETE is destructive — confirm with the user first.
 - **POST** `/api/crm/activities/` — create an activity.
 - **PATCH** `/api/crm/activities/{id}/` — update an activity.
 - **DELETE** `/api/crm/activities/{id}/` — delete an activity. Confirm with the user first.
+- **POST** `/api/crm/activities/{id}/done/` — mark the activity done (stamps `done_at`; see `is_done`/`done_at` in the schema).
 
 ### Tag
 

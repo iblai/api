@@ -16,6 +16,11 @@ remembers.
 - **Header:** `Authorization: Api-Token $IBLAI_API_KEY` on every request.
 - **Path vars:** `{org}` = `$IBLAI_ORG`, `{username}` = `$IBLAI_USERNAME`,
   `{mentor}` = the agent's unique id (e.g. `d17dc729-60fd-4363-81a0-f67d9318b03e`).
+- **Two URL spellings:** agent memories are served under both the `ai-mentor` base
+  (used below) and a twin `ai-agent` base — `…/api/ai-agent/orgs/{org}/…/agents/{agent}/agent-memories/`
+  mirrors the `…/mentors/{mentor}/mentor-memories/` paths. **User-level** memories and
+  settings live on the `ai-agent` base
+  `https://api.iblai.app/dm/api/ai-agent/orgs/{org}/users/{username}` (written `{u}` below).
 - Not connected yet? Run **`/iblai-api-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
@@ -24,6 +29,9 @@ remembers.
 - **GET** `…/users/{username}/mentors/{mentor}/mentor-memories-list/?page={n}&page_size={n}&category={slug}&my_memory={bool}&user_id={id}&email={e}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — paged memory list.
 - **GET** `…/users/{username}/mentors/{mentor}/mentor-memories/?start_date=&end_date=&email=` — memories grouped by category.
 - **GET** `…/orgs/{org}/mentors/{mentor}/memory-categories/` — category list.
+- **GET** `{u}/global-memories/?session_id={id}&content={q}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — user-level (cross-agent) memories.
+- **GET** `{u}/agent-memories/` — the user's memories aggregated across all agents (per-agent list is `mentor-memories-list/` above).
+- **GET** `{u}/memsearch-settings/` — memory capture / recall settings.
 
 ## Writes
 
@@ -54,6 +62,15 @@ remembers.
   ```
 - **PATCH** `…/memory-categories/{categoryId}/` — edit a category.
 - **DELETE** `…/memory-categories/{categoryId}/` — delete a category (no body). Destructive — confirm with the user first.
+- **POST** `{u}/global-memories/` — add a user-level memory: `{ "content": "string (required)" }`.
+- **DELETE** `{u}/global-memories/{memoryId}/` — delete one (no body). Destructive — confirm first.
+- **PUT** `{u}/memsearch-settings/` — update memory settings:
+  ```json
+  {
+    "auto_capture_enabled": "boolean",
+    "use_memory_in_responses": "boolean"
+  }
+  ```
 
 ## Example
 
