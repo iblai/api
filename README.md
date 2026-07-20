@@ -92,7 +92,8 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-api-agent-skill        /iblai-api-agent-chat
 /iblai-api-agent-safety        /iblai-api-agent-disclaimer
 /iblai-api-agent-privacy       /iblai-api-agent-tool
-/iblai-api-agent-mcp
+/iblai-api-agent-mcp           /iblai-api-inference
+/iblai-api-agent-session
 ```
 
 ### Organization (platform admin)
@@ -119,7 +120,7 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-api-analytics           /iblai-api-catalog
 /iblai-api-milestone          /iblai-api-credential
 /iblai-api-catalog-media       /iblai-api-catalog-invitation
-/iblai-api-apply
+/iblai-api-apply               /iblai-api-external-service-proxy
 ```
 
 ### What each skill does
@@ -146,6 +147,8 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-agent-audit` | Agent audit log — who changed what (read-only) |
 | `/iblai-api-agent-eval` | Agent evaluations — datasets, experiments, LLM-as-Judge + human scoring, CSV export |
 | `/iblai-api-agent-chat` | Set up live chat with an agent — wires the `iblai-api-agent-chat` MCP server into the project |
+| `/iblai-api-inference` | Run inference via the OpenAI-compatible API — POST OpenAI-format messages to any `provider/model` (e.g. `openai/gpt-5`) for a completion, SSE stream, or tool calls; list models. Direct REST, no agent needed. |
+| `/iblai-api-agent-session` | Talk to a deployed agent directly over REST/SSE (or WebSocket) and manage chat sessions — POST a prompt with attached metadata (`client_context`), list/read sessions and history exports. Direct-transport counterpart to `agent-chat`. |
 | `/iblai-api-org` | Org-wide settings — default agent, help center URL, chat width, feature toggles |
 | `/iblai-api-management` | Org admin — Users, Groups, Roles, Policies, Teams, Alerts |
 | `/iblai-api-rbac` | RBAC — roles, policies, groups, permission checks, agent/team sharing, student toggles |
@@ -168,6 +171,7 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-catalog-media` | Catalog media resources — list/create/update/delete media tied to courses/units/items, multipart upload, search, by-item lookup |
 | `/iblai-api-catalog-invitation` | Catalog invitations & licensing — platform/course/program invitations (bulk, blank, redeem), licenses & assignments, access requests, suggestions |
 | `/iblai-api-apply` | Application gate — applicant apply/renew/submit flows (drafts, files, fees, withdrawal), reviewer pipeline with per-student decisions, waivers & admin override, placement tests, course assignments, account provisioning, form authoring |
+| `/iblai-api-external-service-proxy` | Call third-party AI services (ElevenLabs TTS/voices, HeyGen avatar video) through the External Service Proxy — discover services, POST an envelope to invoke; provider keys stored server-side per org |
 
 Skills live in [`skills/`](./skills). Read them, extend them, or write your own.
 

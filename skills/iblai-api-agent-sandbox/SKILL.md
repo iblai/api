@@ -54,6 +54,11 @@ workspace uses. Use when connecting an agent to a sandboxed workspace.
   ```
 - **PATCH** `…/claw/instances/{id}/` — edit instance (send only changed keys: `name`, `claw_type` `openclaw|ironclaw`, `server_url`, `gateway_token`, …).
 - **DELETE** `…/claw/instances/{id}/` — delete instance. Destructive — confirm with the user first.
+- **POST** `…/claw/instances/{id}/push-providers/` — push model-provider config to the instance.
+- **POST** `…/orgs/{org}/claw/model-providers/` — register a model-provider block: `{ "server": id, "name": "string" }` (+ `base_url`, `api_type`, `credential_name`, `credential_key`, `model_catalog`, `enabled`, `models_mode`).
+- **POST** `…/orgs/{org}/claw/agent-configs/` — create a Claw agent config: `{ "agent": id, "server": id, "enabled": bool, "auto_push": bool }`.
+- **PATCH** `…/claw/agent-configs/{id}/` — edit it: `{ identity, soul, model, config, heartbeat, session }`.
+- **POST** `…/claw/agent-configs/{id}/push-config/` — push the agent config to the instance.
 - **PATCH** `…/mentors/{mentor}/agent-config/` — set model:
   ```json
   { "model": "string" }
