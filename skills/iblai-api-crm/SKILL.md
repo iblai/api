@@ -119,9 +119,10 @@ URLs — a detail different from stock DRF pagination.
 - **POST** `/api/crm/persons/{id}/invite/` — email an invitation to the person's
   `primary_email`. Body (all optional): `is_admin` (bool), `is_staff` (bool),
   `enrollment_config` (object, forwarded to auto-enroll the invitee),
-  `redirect_to` (url). Returns `409` if an active invitation already exists for
-  that email, `422` if the person is already linked to a platform user. Sends
-  outward — confirm with the user first.
+  `redirect_to` (url). Success returns the `invitation_id`; `409` if an active
+  invitation already exists for that email (the response carries the existing
+  `invitation_id`, so you can track / resend it), `422` if the person is already
+  linked to a platform user. Sends outward — confirm with the user first.
 - **POST** `/api/crm/persons/{id}/link-user/` — link the CRM person to an existing
   platform user: body `{ "user_id": int }` (required; the user must already be an
   active member of your org, else `403`). Sets `platform_user`.

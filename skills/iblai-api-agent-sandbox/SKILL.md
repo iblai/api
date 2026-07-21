@@ -98,10 +98,23 @@ workspace uses. Use when connecting an agent to a sandboxed workspace.
 - **PATCH** `…/mentors/{mentor}/claw-config/` — edit the connection (`enabled`, `auto_push`, `agent_config`).
 - **DELETE** `…/mentors/{mentor}/claw-config/` — disconnect. Destructive — confirm with the user first.
 - **POST** `…/mentors/{mentor}/claw-config/push-config/` — push the agent's `agent_config` to the instance. Outward-facing — confirm with the user first.
-- **PATCH** `…/mentors/{mentor}/agent-config/` — set the agent's model:
+- **PATCH** `…/mentors/{mentor}/agent-config/` — update the agent's workspace config (send only changed keys):
   ```json
-  { "model": "string" }
+  {
+    "model": "string",
+    "allowed_models": "string[]",
+    "identity": "string", "soul": "string", "user_context": "string",
+    "tools": "string", "agents": "string", "bootstrap": "string",
+    "heartbeat": "string", "memory": "string",
+    "config": {}
+  }
   ```
+  `identity` / `soul` / `user_context` / `tools` / `agents` / `bootstrap` / `heartbeat` /
+  `memory` are the claw **workspace files** (IDENTITY.md, SOUL.md, …) pushed to the instance;
+  `config` is a JSON instance-config patch (heartbeat schedule, session isolation, skill
+  toggles, model fallbacks). `config` is deny-list validated — writes to `gateway.auth`,
+  `gateway.controlUi.dangerouslyDisableDeviceAuth`, `tools.exec.host`, `sandbox.mode`, and
+  `hooks.allowUnsafeExternalContent` are rejected.
 
 ## Example
 

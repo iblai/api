@@ -60,6 +60,7 @@ admins, the email templates and SMTP config that back notifications.
 
 - **GET** `…/platforms/{platform_key}/templates/` — list notification templates. Query: `tags` (comma-separated), `page`, `page_size` (default 25; passing `page` paginates). Each item: `id, type, name, description, is_inherited, source_platform, is_enabled, can_customize, is_custom, message_title, email_subject, tags, spas, allowed_channels, available_context`.
 - **GET** `…/platforms/{platform_key}/templates/{type}/` — one template's full detail (all editable content + per-type config + `available_context`).
+- **GET** `…/platforms/{platform_key}/templates/tags/` — the distinct tag values across the platform's templates (the lookup behind the `tags` filter on the list endpoint).
 
 ### Notification preferences (per user)
 

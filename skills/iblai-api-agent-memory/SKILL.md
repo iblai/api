@@ -60,7 +60,7 @@ An org-wide `enable_memsearch` flag gates the whole feature (see `memsearch-stat
 
 ### Global (cross-agent) memories
 
-- **GET** `{u}/global-memories/?user_id={id}&email={e}` — user-level memories shared across every agent.
+- **GET** `{u}/global-memories/?user_id={id}&email={e}&session_id={uuid}&content={substr}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — user-level memories shared across every agent. Filters: `session_id` (the source session), `content` (case-insensitive substring), and the `start_date` / `end_date` created-at range.
 
 ### Settings
 
@@ -133,8 +133,9 @@ curl -s \
   existing category's `slug` from the `memory-categories/` endpoint.
 - The `mentor-memories-list/` filters stack — combine `category`, `user_id`, `email`, and
   the date range to narrow results; `my_memory=true` scopes the list to the caller's own memories.
-- **Global memories accept only `user_id` / `email` filters** — no category or date range
-  (those are agent-memory only).
+- **Global memories** filter by `user_id` / `email` plus `session_id`, `content` (substring),
+  and a `start_date` / `end_date` range — but **not** `category` or `my_memory`, which are
+  agent-memory-only (global memories aren't categorized).
 - Categories are org- + agent-scoped (`…/orgs/{org}/mentors/{mentor}/…`), not user-scoped
   like the memory endpoints.
 - There is no bulk-delete endpoint: to clear several memories, issue one DELETE per id.

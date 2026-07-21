@@ -136,7 +136,7 @@ and roles (platform is taken from the token; service accounts pass `platform_key
 
 ### Groups
 
-- **POST** `https://api.iblai.app/dm/api/core/rbac/groups/` — create a group: `{platform_key, name, description, users_to_add: [id]}`. Owner is set to the caller; `is_internal` is read-only.
+- **POST** `https://api.iblai.app/dm/api/core/rbac/groups/` — create a group: `{platform_key, name, description, unique_id (optional, client-supplied), users_to_add: [id]}`. Owner is set to the caller; `is_internal` is read-only.
 - **PUT / PATCH** `https://api.iblai.app/dm/api/core/rbac/groups/{id}/` — update; also accepts `users_to_remove`. See also **`/iblai-api-management`**.
 - **DELETE** `https://api.iblai.app/dm/api/core/rbac/groups/{id}/?platform_key={org}` — delete a group. Destructive — confirm with the user first.
 

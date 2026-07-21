@@ -59,7 +59,7 @@ agent against a dataset and grade the results.
 
 - **GET** `…/datasets/{dataset_name}/runs/` — list runs (merges completed runs with in-flight pending records). Filters: `?name=` (substring), `?user_email=`.
 - **GET** `…/datasets/{dataset_name}/runs/{run_name}/` — run details: header + `dataset_run_items` (each with `input`, `expected_output`, `actual_output`, `error`, `scores[]`) + `pending_judges[]`.
-- **GET** `…/datasets/{dataset_name}/runs/{run_name}/export/` — export results as CSV.
+- **GET** `…/datasets/{dataset_name}/runs/{run_name}/export/` — export results as CSV (columns: `item_id`, `input`, `expected_output`, `actual_output`, `trace_id`, plus one `score_<name>` column per score).
 
 ### LLM-as-Judge
 

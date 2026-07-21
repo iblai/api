@@ -31,7 +31,7 @@ Use when embedding an agent on an external website.
 
 ### Backend token provisioning
 
-- **GET** `https://api.iblai.app/dm/api/core/users/platforms/?username={username}` — the provisioned user's org/platform link record(s). Identify the user by `username` (or `user_id` / `email`); the Api-Token already scopes results to its own org, so you get just that one link. Returns a **list** — the fields the embed payload needs are `key` (the org key), `org`, `is_admin`, and `username`.
+- **GET** `https://api.iblai.app/dm/api/core/users/platforms/?username={username}&platform_key={org}` — the provisioned user's org/platform link record(s). Identify the user by `username` (or `user_id` / `email`). **`platform_key={org}` (or `org={org}`) is required** — the Platform API Token is authorized against it and the call `403`s without it. Returns a **list**; the fields the embed payload needs are `key` (the org key), `org`, `is_admin`, and `username`.
 
 ## Writes
 

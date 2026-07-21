@@ -171,10 +171,10 @@ existed for the same (user, provider, org, service), it is updated in place.
     disable it for documentation servers whose formatting must survive.
   - Capture the returned `id` — the connection and the agent wiring both
     need it.
-- **PATCH | PUT** `…/mcp-servers/{id}/` — edit a server (e.g. flip an
+- **PATCH | PUT** `…/users/{username}/mcp-servers/{id}/` — edit a server (e.g. flip an
   existing server to in-chat OAuth with
   `{"auth_scope": "user", "auth_type": "oauth2", "oauth_service": 12}`).
-- **DELETE** `…/mcp-servers/{id}/` — delete a server. Destructive — confirm
+- **DELETE** `…/users/{username}/mcp-servers/{id}/` — delete a server. Destructive — confirm
   with the user first.
 
 ### MCP server connections
@@ -226,9 +226,9 @@ existed for the same (user, provider, org, service), it is updated in place.
   - `credentials` and `extra_headers` are **masked on read** — when
     PATCHing, only send `credentials` if actually rotating the secret;
     never send a masked value back.
-- **PATCH** `…/mcp-server-connections/{id}/` — update; prefer
+- **PATCH** `…/users/{username}/mcp-server-connections/{id}/` — update; prefer
   `{"is_active": false}` over DELETE if the credential may return.
-- **DELETE** `…/mcp-server-connections/{id}/` — delete a connection.
+- **DELETE** `…/users/{username}/mcp-server-connections/{id}/` — delete a connection.
   Destructive — confirm with the user first.
 
 ### Agent wiring
@@ -289,7 +289,7 @@ succeeds automatically on their **next message**, so offer a retry.
 | `oauth_connection_resolved` | `server_name`, `server_id`, `message` | dismiss the prompt; the chat resumes automatically |
 | `mcp_tools_retrieved` | `session_id`, `mentor_id` | informational: tool fetch succeeded on retry (3 attempts, backoff 1s/2s/4s) — log or ignore |
 | `warning` | `message`, `developer_error`, `code: 503` | non-OAuth tool failure; the chat continues **without** MCP tools — surface `message`, log `developer_error`, never show it to end users |
-| `error` | `error`, `status_code: 400` | OAuth timeout / URL build failure / missing connected service; the turn terminates — offer retry |
+| `error` | `error`, `status_code: 400` (**no `type` field** — detect by the top-level `error` key) | OAuth timeout / URL build failure / missing connected service; the turn terminates — offer retry |
 
 Constants: max wait 300s, poll interval 10s. Each poll checks for a
 connection with a valid connected service for user + server (or a connected
