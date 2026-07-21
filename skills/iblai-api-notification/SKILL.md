@@ -1,75 +1,132 @@
 ---
 name: iblai-api-notification
-description: Read and send ibl.ai platform notifications via the API — unread counts, the notifications list with filters, mark-as-read (all or specific), the two-step notification builder (preview then send/schedule, with source validation and recipient preview), per-user push-device (FCM) tokens, and org-admin email-template & SMTP management. Use when reading an organization's notifications, sending one, or configuring notification templates.
+description: Read and send ibl.ai platform notifications via the API — unread counts, the notifications list with filters, mark-as-read (all, bulk, or specific), delete, the two-step notification builder (preview then send/schedule, with source validation and recipient preview), per-user notification preferences, per-user push-device (FCM) tokens, and org-admin email-template & SMTP management. Use when reading an organization's notifications, sending one, tuning a user's preferences, or configuring notification templates.
 ---
 
 # iblai-api-notification
 
 Read and send an organization's platform notifications via the API: the unread
-count, the notifications list with channel and status filters, mark-as-read, and
-the two-step notification builder (preview then send/schedule, with source
-validation and recipient preview). Also manage per-user push-device (FCM) tokens
-and, for org admins, the email templates and SMTP config that back notifications.
+count, the notifications list with channel/status/tag filters, mark-as-read (all,
+bulk, or specific), delete, and the two-step notification builder (preview then
+send/schedule, with source validation and recipient preview). Also manage a
+user's notification preferences, per-user push-device (FCM) tokens and, for org
+admins, the email templates and SMTP config that back notifications.
 
 ## Auth & conventions
 
 - **Base URL:** `https://api.iblai.app`
 - **Header:** `Authorization: Api-Token $IBLAI_API_KEY` on every request.
 - **Path vars:** `{org}` = `$IBLAI_ORG`, `{username}` = `$IBLAI_USERNAME`,
-  `{platform_key}` = the org/platform key (usually `$IBLAI_ORG`).
+  `{platform_key}` = the org/platform key (usually `$IBLAI_ORG`), `{type}` = a
+  notification-type key (e.g. `USER_NOTIF_COURSE_ENROLLMENT`), `{build_id}` = the
+  id returned by the builder's `preview/` step.
 - These are **platform-level** endpoints on the DM host; all paths below sit under
   `https://api.iblai.app/dm/api/notification/v1/` (written `…` in this doc).
 - Not connected yet? Run **`/iblai-api-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
+## Concepts
+
+- **Two-step builder.** Sending a custom notification is `preview/` → `send/`.
+  `preview/` resolves recipients and returns a `build_id`; `send/` takes that
+  `build_id` to actually send (or schedule, when `preview/` was given a
+  `process_on` datetime). `validate_source/` and `{build_id}/recipients/` let you
+  check recipients before committing.
+- **Source types.** A builder `source` is `{ "type": …, "data": … }`. Valid
+  `type` values: `email`, `username`, `platform`, `csv`, `department`, `pathway`,
+  `program`, `usergroup`. `data` is a list of identifiers (or, for `csv`, an
+  uploaded file — send `validate_source/` as multipart).
+- **Templates: platform toggle vs. per-user preference.** A **template** is a
+  platform-admin object per notification `{type}` (its subject/body/channels), and
+  `templates/{type}/toggle/` enables or disables that type for the whole org.
+  Separately, **notification preferences** are per-user (email/push on/off,
+  frequency, per-type opt-outs). Both are distinct from marking messages read.
+- **Template inheritance.** Each template reports `is_inherited` (using the main
+  platform default vs. an org override), `source_platform`, and `can_customize`.
+
 ## Reads
 
-- **GET** `https://api.iblai.app/dm/api/notification/v1/orgs/{org}/users/{username}/notifications-count/?status=UNREAD` — unread count (also `channel`).
-- **GET** `https://api.iblai.app/dm/api/notification/v1/orgs/{org}/users/{username}/notifications/` — notifications list (filters: `channel`, `status`, `start_date`, `end_date`, `exclude_channel`).
-- **GET** `…/orgs/{org}/notification-builder/context/` — template/context variables available to the builder.
-- **GET** `…/orgs/{org}/notification-builder/{build_id}/recipients/?page={n}&page_size={n}` — paged recipient preview for a built notification.
+### Notifications
+
+- **GET** `…/orgs/{org}/users/{username}/notifications-count/?status=UNREAD` — unread count (filters: `status`, `channel`).
+- **GET** `…/orgs/{org}/users/{username}/notifications/` — notifications list. Filters: `status`, `channel`, `exclude_channel`, `start_date`, `end_date`, `tags` (comma-separated, matches ANY). Paginated. Each item: `id, title, body, short_message, status, channel, context, tags, created_at, updated_at`.
+
+### Notification builder
+
+- **GET** `…/orgs/{org}/notification-builder/context/` — context data for building: available templates, channels (with ids), and platforms.
+- **GET** `…/orgs/{org}/notification-builder/{build_id}/recipients/?search={q}&page={n}&page_size={n}` — paged recipient preview for a built notification (`search` matches username/email).
+
+### Templates (org admin)
+
+- **GET** `…/platforms/{platform_key}/templates/` — list notification templates. Query: `tags` (comma-separated), `page`, `page_size` (default 25; passing `page` paginates). Each item: `id, type, name, description, is_inherited, source_platform, is_enabled, can_customize, is_custom, message_title, email_subject, tags, spas, allowed_channels, available_context`.
+- **GET** `…/platforms/{platform_key}/templates/{type}/` — one template's full detail (all editable content + per-type config + `available_context`).
+
+### Notification preferences (per user)
+
+- **GET** `…/platforms/{platform_key}/notification-preferences/?username={username}` — a user's preferences: `email_enabled`, `push_enabled`, `notification_frequency`, and `type_preferences` (read-only per-type map). `username` is optional (admin only); defaults to the caller.
+- **GET** `…/platforms/{platform_key}/notification-preferences/available-types/?username={username}&tags={csv}` — notification types available on the platform, each with `type, name, description, tags, is_enabled, user_preference`.
 
 ## Writes
 
-- **POST** `https://api.iblai.app/dm/api/notification/v1/orgs/{org}/mark-all-as-read` — mark all (or specific) notifications as read:
-  ```json
-  {
-    "notification_ids": "uuid[] (omit/empty = mark ALL unread)"
-  }
-  ```
-- **POST** `https://api.iblai.app/dm/api/notification/v1/orgs/{org}/notification-builder/preview/` — builder step 1, preview (returns `build_id`):
-  ```json
-  {
-    "channels": "integer[] (required, e.g. [1])",
-    "sources": "NotificationSource[] (required, from recipient emails)",
-    "template_id": "uuid|null",
-    "template_data": "object|null",
-    "context": "object",
-    "process_on": "ISO datetime|null (schedule)"
-  }
-  ```
-- **POST** `https://api.iblai.app/dm/api/notification/v1/orgs/{org}/notification-builder/send/` — step 2, **send/schedule**:
-  ```json
-  {
-    "build_id": "string (required)"
-  }
-  ```
-- **POST** `…/orgs/{org}/notification-builder/validate_source/` — validate recipient sources before building: body `{ "type": "string", "data": … }` → `{ valid_count, invalid_entries, sample_recipients }`.
-- **PUT** `…/orgs/{org}/users/{username}/notifications/` — mark a specific notification read/unread: `{ "notification_id": "uuid", "status": "READ|UNREAD" }`.
-- **POST** `…/orgs/{org}/users/{username}/register-fcm-token/` — register a push device: `{ "name": "string", "registration_id": "string" }`.
-- **DELETE** `…/orgs/{org}/users/{username}/register-fcm-token/` — unregister a push device (same body).
+### Notifications
 
-## Template & SMTP admin (platform-scoped)
+- **PUT** `…/orgs/{org}/users/{username}/notifications/` — mark specific notifications read/unread: `{ "notification_id": "uuid", "status": "READ|UNREAD" }`.
+- **POST** `…/orgs/{org}/mark-all-as-read` — **Confirm with the user first.** Mark the caller's unread notifications read; returns `{ message, count }`:
+  ```json
+  { "notification_ids": "uuid[] (omit/empty = mark ALL unread)" }
+  ```
+- **PATCH** `…/orgs/{org}/users/{username}/notifications/bulk-update/` — **Confirm with the user first.** Set every one of a user's notifications to one status: `{ "status": "READ|UNREAD" }`. (RBAC: `Ibl.Notifications/Notification/write`.)
+- **DELETE** `…/orgs/{org}/users/{username}/notifications/{notification_id}/` — **Confirm with the user first.** Delete a single notification. (RBAC: `Ibl.Notifications/Notification/delete`.)
 
-Org-admin management of email templates and SMTP, under
-`…/platforms/{platform_key}/…`. `{type}` is a template key such as
-`USER_NOTIF_COURSE_ENROLLMENT` or `USER_NOTIF_CREDENTIALS`.
+### Notification builder
 
-- **POST** `…/platforms/{platform_key}/config/test-smtp/` — send a test email to verify SMTP: `{ smtp_host, smtp_port, smtp_username, smtp_password, use_tls, use_ssl, test_email, from_email }`.
-- **PATCH** `…/platforms/{platform_key}/templates/{type}/` — edit a template: `{ email_subject, email_html_template, message_title, message }`.
-- **POST** `…/platforms/{platform_key}/templates/{type}/reset/` — reset the template to its default.
-- **POST** `…/platforms/{platform_key}/templates/{type}/test/` — send a test render: `{ context, course_name, credential_url }`.
-- **PATCH** `…/platforms/{platform_key}/templates/{type}/toggle/` — enable/disable: `{ "is_enabled": bool }`.
+- **POST** `…/orgs/{org}/notification-builder/validate_source/` — validate one recipient source before building. Body `{ "type": …, "data": … }` (multipart with a `data` file for `csv`) → `{ status, valid_count, invalid_entries[], sample_recipients[] }`.
+- **POST** `…/orgs/{org}/notification-builder/preview/` — builder step 1; resolves recipients and returns `{ status, build_id, count, warning, recipients[] }`. Body: see **Schema**.
+- **POST** `…/orgs/{org}/notification-builder/send/` — **Confirm with the user first.** Step 2, send/schedule the built notification: `{ "build_id": "string (required)" }` → `{ status, notifications_sent, build_id, message }`.
+
+### Templates (org admin)
+
+- **PATCH** `…/platforms/{platform_key}/templates/{type}/` — edit a template's content and config (see **Schema**).
+- **PATCH** `…/platforms/{platform_key}/templates/{type}/toggle/` — enable/disable this type for the org: `{ "allow_notification": bool (required) }`.
+- **POST** `…/platforms/{platform_key}/templates/{type}/reset/` — reset the template to its platform default (no body).
+- **POST** `…/platforms/{platform_key}/templates/{type}/test/` — **Confirm with the user first.** Send a test render to the caller: `{ "context": {…}, "use_sample_context": bool }` (both optional; `use_sample_context` defaults true) → `{ success, message, recipient }`.
+
+### Notification preferences (per user)
+
+- **PATCH** `…/platforms/{platform_key}/notification-preferences/?username={username}` — update a user's preferences: `{ "email_enabled": bool, "push_enabled": bool, "notification_frequency": "string" }`.
+- **PATCH** `…/platforms/{platform_key}/notification-preferences/types/{type}/?username={username}` — enable/disable one type for the user: `{ "enabled": bool }`.
+
+### SMTP (org admin)
+
+- **POST** `…/platforms/{platform_key}/config/test-smtp/` — **Confirm with the user first.** Send a test email to verify SMTP: `{ smtp_host, smtp_port, smtp_username, smtp_password, use_tls (default true), use_ssl (default false), test_email, from_email (optional) }` → `{ status, message, success }`.
+
+### Push devices (FCM)
+
+- **POST** `…/orgs/{org}/users/{username}/register-fcm-token/` — register a push device: `{ "registration_id": "string (required)", "name": "string" }`.
+- **DELETE** `…/orgs/{org}/users/{username}/register-fcm-token/` — **Confirm with the user first.** Unregister a push device: `{ "registration_id": "string" }`.
+
+## Schema
+
+**Builder `preview/` body** (`Mode`: req=required, opt=optional):
+
+| Field | Type | Mode | Notes |
+| --- | --- | --- | --- |
+| `channels` | integer[] | req | Channel ids (from `…/notification-builder/context/`). |
+| `sources` | object[] | req | Each `{ "type": <source type>, "data": … }`. |
+| `template_id` | uuid | opt | Use a predefined template. Mutually exclusive with `template_data`. |
+| `template_data` | object | opt | Ad-hoc message: `{ "message_title": str (opt), "message_body": str (req) }`. |
+| `context` | object | opt | Extra variables available in the message text. |
+| `process_on` | ISO datetime | opt | Schedule; sent hourly, only if before the hour boundary. |
+
+**Template `PATCH` body** — editable content fields: `message_title`,
+`message_body`, `short_message_body`, `email_subject`, `email_from_address`,
+`email_html_template`, `tags`, `spa_ids`, `channel_ids`. Advanced templates also
+accept per-type config inputs (verified in the template detail serializer), e.g.
+`periodic_*` (report cadence), `policy_*`, `recipients_*`, `human_support_*`,
+`new_content_*`, `course_milestone_*`, `skill_mastery_*`, `schedule_change_*`,
+`courses_progress_*`, `grade_posted_*`. Fields like `is_inherited`, `is_enabled`,
+`source_platform`, `can_customize`, `available_context`, and the `*_config`
+objects are **read-only**.
 
 ## Example
 
@@ -83,9 +140,15 @@ curl -s \
 
 ## Notes
 
-- Sending a notification is **outward-facing** — confirm the recipients with the
-  user before the send step.
+- Sending a notification is **outward-facing** — confirm recipients with the user
+  before the `send/` step (and before `templates/{type}/test/` and
+  `config/test-smtp/`, which both send real email).
 - The builder is two steps: `preview/` returns a `build_id`, then `send/` takes
-  that `build_id` to actually send or schedule.
-- `mark-all-as-read` with an empty/omitted `notification_ids` marks **all** unread
-  notifications read; pass specific ids to mark just those.
+  that `build_id` to actually send or schedule. A `process_on` passed to
+  `preview/` turns the send into a scheduled one.
+- `mark-all-as-read` with an empty/omitted `notification_ids` marks **all** the
+  caller's unread notifications read; pass ids to mark just those. `bulk-update`
+  differs: it sets **every** notification for a target user to one `status` (and
+  can move them back to `UNREAD`).
+- Template `toggle/` (platform-wide on/off for a type) is different from
+  per-user `notification-preferences/` — don't confuse the two.

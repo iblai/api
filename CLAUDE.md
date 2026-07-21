@@ -43,7 +43,7 @@ mcp/                    # hosted Python MCP server — runtime chat only
 
 ## Skills
 
-- Each skill is a single `SKILL.md` with YAML frontmatter (`name`, `description`) following the format of `skills/iblai-api-agent-setting/SKILL.md` and `skills/iblai-api-login/SKILL.md`.
+- Each skill is a `SKILL.md` with YAML frontmatter (`name`, `description`) following the format of `skills/iblai-api-agent-setting/SKILL.md` and `skills/iblai-api-login/SKILL.md`. A skill MAY additionally bundle a **`references/`** directory for exhaustive lookup material (large field-schema or action-catalog tables) and an **`assets/`** directory for sample files, each linked from `SKILL.md` — but keep `SKILL.md` itself the scannable primary that carries the endpoints. See `skills/iblai-api-external-service-proxy/` (per-provider action catalogs in `references/`) and `skills/iblai-api-crm/` (`references/schema.md`) for the pattern.
 - **Canonical section structure (every endpoint-documenting skill MUST follow this):**
   1. `## Auth & conventions` — base URL, header, path vars, prefix, "run `/iblai-api-login` first" line, and the destructive-confirm note.
   2. *(optional)* one short explanatory section (e.g. `## Concepts`, `## Pagination`) when the API needs framing before the endpoints.

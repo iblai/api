@@ -31,7 +31,7 @@ Use when embedding an agent on an external website.
 
 ### Backend token provisioning
 
-- **GET** `https://api.iblai.app/dm/api/core/users/platforms/` — fetch the user's organization/platform record.
+- **GET** `https://api.iblai.app/dm/api/core/users/platforms/?username={username}` — the provisioned user's org/platform link record(s). Identify the user by `username` (or `user_id` / `email`); the Api-Token already scopes results to its own org, so you get just that one link. Returns a **list** — the fields the embed payload needs are `key` (the org key), `org`, `is_admin`, and `username`.
 
 ## Writes
 
@@ -57,14 +57,14 @@ Use when embedding an agent on an external website.
   }
   ```
   To set advanced styling, send just `custom_css`; for advanced scripting, send `custom_javascript`.
-- **POST** `…/mentors/{mentor}/sharable-link` — create / regenerate the share link (empty body).
+- **POST** `…/mentors/{mentor}/sharable-link` — create / regenerate the share link (empty body). **Confirm with the user first** (publishes a public link to the agent).
 - **PUT** `…/mentors/{mentor}/sharable-link` — enable / disable the share link:
   ```json
   {
     "enabled": "boolean"
   }
   ```
-- **POST** `https://api.iblai.app/dm/api/core/orgs/{org}/redirect-tokens/` — mint a redirect token for the embed site:
+- **POST** `https://api.iblai.app/dm/api/core/orgs/{org}/redirect-tokens/` — mint a redirect token for the embed site. **Confirm with the user first** (issues an outward-facing token):
   ```json
   {
     "url": "string (required)",
@@ -76,14 +76,64 @@ Use when embedding an agent on an external website.
 
 Skip the SSO login popup by minting the user's tokens from your own backend, then
 handing the embed the same `ibl-data` blob the Auth SPA would have produced. All
-calls are **server-to-server** with the org's Platform API Token — never expose
-this in browser JS.
+calls are **server-to-server** with the org's Platform API Token (issue / rotate it via
+**`/iblai-api-token`**) — never expose this key in browser JS.
 
-- **POST** `https://api.iblai.app/dm/api/core/consolidated-token/provision/` — resolve-or-create the user and mint `dm_token` + `axd_token`.
-- Assemble those into the `ibl-data` payload and pass it to the iframe.
+- **POST** `https://api.iblai.app/dm/api/core/consolidated-token/provision/` — resolve-or-create the edX user, link them to the org, and mint the tokens. **Confirm with the user first** (it can create a real user + credentials). Request body:
+  ```json
+  {
+    "username": "string (required)",
+    "email": "string (required)",
+    "name": "string (optional — only used when creating a new user)",
+    "platform_key": "string (required — must equal your Api-Token's org)"
+  }
+  ```
+  On `200`, each token comes back as a `{token, expires}` object:
+  ```json
+  {
+    "data": {
+      "user": {
+        "user_id": 1234,
+        "user_email": "string",
+        "user_nicename": "string (username)",
+        "user_display_name": "string (username)",
+        "user_fullname": "string"
+      },
+      "axd_token":     { "token": "string", "expires": "datetime" },
+      "dm_token":      { "token": "string", "expires": "datetime" },
+      "edx_jwt_token": { "token": "string", "expires": "datetime" }
+    }
+  }
+  ```
+
+`edx_jwt_token` is provisioning-only (the plain consolidated-token proxy omits it). Error
+cases: **403** if `email` and `username` resolve to different existing users
+(`{"detail":"Invalid Request"}`), if `platform_key` ≠ your org, or if the per-user token cap
+is hit; **503** with a `Retry-After` header if the new user hasn't synced to DM yet — re-POST
+the identical body.
 
 Gated per-org by the ibl.ai-managed flag `ENABLE_PLATFORM_CONSOLIDATED_PROXY_PROVISIONING`
-(must be `true`, else the provision endpoint returns **404** — contact ibl.ai to enable).
+(must be boolean `true`, else the provision endpoint returns **404** — contact ibl.ai to enable).
+
+**Assembling `ibl-data`.** Build this JSON on your backend (it carries the freshly minted
+tokens) and hand it to the embed, which seeds its `localStorage` from it exactly as the Auth
+SPA does after SSO. Map the two calls onto its keys:
+
+| `ibl-data` key | Source |
+|---|---|
+| `axd_token` / `axd_token_expires` | `/provision` → `data.axd_token.{token,expires}` |
+| `dm_token` / `dm_token_expires` | `/provision` → `data.dm_token.{token,expires}` |
+| `edx_jwt_token` / `edx_jwt_token_expires` | `/provision` → `data.edx_jwt_token.{token,expires}` |
+| `userData` | `JSON.stringify(/provision data.user)` |
+| `tenant` | `/users/platforms` → `key` |
+| `current_tenant` | `JSON.stringify({ key })` |
+| `tenants` | `JSON.stringify([{ key, name: org, is_admin, username }])` |
+
+`current_tenant`, `tenants`, and `userData` are JSON **strings** (stringify them before
+embedding). `tenant` / `current_tenant` / `tenants` are the widget's verbatim `localStorage`
+keys — each holds the **org** key/name. Deliver the blob one of two ways: append it
+URL-encoded as an `ibl-data=` query param on the iframe `src`, or `postMessage` it to the
+loaded iframe as `{ type: "MENTOR:AUTH_UPDATE", authData: JSON.stringify(iblData) }`.
 
 ## Example
 

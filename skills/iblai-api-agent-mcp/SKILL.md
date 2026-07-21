@@ -126,8 +126,11 @@ existed for the same (user, provider, org, service), it is updated in place.
   — the OAuth callback. Hit by the user's browser after provider consent —
   relay the vendor's query params unmodified (never decode or alter `state`);
   do not call it directly with fabricated values. Success returns the
-  connected service (`id`, `provider`, `service`, `expires_at`,
-  `scope_names`, `token_type`, `service_info`).
+  connected service (`id`, `provider`, `service`, `expires_at`, `scope`
+  (raw scope string), `scope_names` (canonical ids, e.g. `["drive"]`),
+  `scopes` (full scope strings), `token_type`, `service_info`,
+  `username`) — the same `ConnectedServiceSerializer` the
+  connected-services list read returns.
 
 ## Writes
 

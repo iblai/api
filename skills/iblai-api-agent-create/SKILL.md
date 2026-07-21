@@ -66,3 +66,6 @@ curl -X POST \
   `/iblai-api-agent-tool`, etc., using the returned `unique_id` as `{mentor}`.
 - To copy an existing agent rather than start from a template, use the **fork**
   endpoint in `/iblai-api-agent-setting`.
+- **End-to-end example:** the [`iblai/quickstarts`](https://github.com/iblai/quickstarts)
+  Python client wraps these calls — create an agent, open a session, and chat with it
+  from a script (see also `/iblai-api-agent-session` for the chat transport).
