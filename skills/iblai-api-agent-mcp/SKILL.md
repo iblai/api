@@ -114,7 +114,7 @@ existed for the same (user, provider, org, service), it is updated in place.
   `can_use_tools`.
 - **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/oauth-services/`
   — enabled OAuth services: `id`, `oauth_provider`, `name`, `display_name`,
-  `scope`, `image`.
+  `description`, `scope`, `image`, `created_at`, `updated_at`.
 - **GET** `https://api.iblai.app/dm/api/ai-account/orgs/{org}/oauth-services/{service_name}/scopes/`
   — the scopes a service requests.
 - **GET** `https://api.iblai.app/dm/api/ai-account/connected-services/orgs/{org}/users/{username}/`
@@ -128,8 +128,9 @@ existed for the same (user, provider, org, service), it is updated in place.
   do not call it directly with fabricated values. Success returns the
   connected service (`id`, `provider`, `service`, `expires_at`, `scope`
   (raw scope string), `scope_names` (canonical ids, e.g. `["drive"]`),
-  `scopes` (full scope strings), `token_type`, `service_info`,
-  `username`) — the same `ConnectedServiceSerializer` the
+  `scopes` (full scope strings), `token_type`, `service_info`
+  (`{id, name, display_name, logo}`), `username`) — the same
+  `ConnectedServiceSerializer` the
   connected-services list read returns.
 
 ## Writes
@@ -291,9 +292,10 @@ succeeds automatically on their **next message**, so offer a retry.
 | `warning` | `message`, `developer_error`, `code: 503` | non-OAuth tool failure; the chat continues **without** MCP tools — surface `message`, log `developer_error`, never show it to end users |
 | `error` | `error`, `status_code: 400` (**no `type` field** — detect by the top-level `error` key) | OAuth timeout / URL build failure / missing connected service; the turn terminates — offer retry |
 
-Constants: max wait 300s, poll interval 10s. Each poll checks for a
-connection with a valid connected service for user + server (or a connected
-service matching provider + user + org) — first match resolves.
+Constants: max wait 300s (`MCP_OAUTH_MAX_WAIT_SECONDS`), poll interval 10s
+(`MCP_OAUTH_POLL_INTERVAL_SECONDS`). Each poll checks for a connection with a
+valid connected service for user + server (or a connected service matching
+provider + user + org) — first match resolves.
 
 ## Example
 
@@ -348,3 +350,24 @@ curl -s -X POST "$BASE/mcp-server-connections/" -H "$AUTH" -H "Content-Type: app
 - The chat events above ride the runtime chat connection (see
   `/iblai-api-agent-chat` for wiring live chat); everything else in this
   skill is plain REST.
+
+## Reference material
+
+`references/` carries the additive material that doesn't fit the endpoint
+sections above — the endpoint/method/body and event facts stay above:
+
+- [`references/concepts.md`](references/concepts.md) — backend model and the
+  design "why": the five Django models behind the wire objects, the module map,
+  runtime-resolution internals, the OAuth state/token design, and the
+  validation, access-control, and extensibility rules.
+- [`references/integration.md`](references/integration.md) — client / front-end
+  notes for the REST setup screens: driving the connection form off `auth_type`,
+  scope-aware fields, sourcing the OAuth2 connected-service picker, rendering
+  inline per-field validation errors, and the browser OAuth start/callback
+  strategy.
+- [`references/in-chat-events.md`](references/in-chat-events.md) — the fuller
+  per-frame event reference: field types, the three `error` variants with their
+  exact messages, and the client-handling gotchas.
+- [`references/mcp-servers-catalog.md`](references/mcp-servers-catalog.md) — the
+  open-source `iblai-mcp` repo of ready-made MCP servers. This skill wires
+  *external* MCP servers onto agents; that repo is a source of servers to wire.

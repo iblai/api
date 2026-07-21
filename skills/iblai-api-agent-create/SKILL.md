@@ -69,3 +69,10 @@ curl -X POST \
 - **End-to-end example:** the [`iblai/quickstarts`](https://github.com/iblai/quickstarts)
   Python client wraps these calls — create an agent, open a session, and chat with it
   from a script (see also `/iblai-api-agent-session` for the chat transport).
+
+## Reference material
+
+Doc-sourced material preserved from the developer docs:
+
+- [`references/quickstart.md`](references/quickstart.md) — the [`iblai/quickstarts`](https://github.com/iblai/quickstarts) Python client outlined: env vars and the create-agent → open-session → chat-over-WebSocket flow, with the runnable client (`quickstart.py` + `api.py`) preserved in [`assets/`](assets/).
+- [`references/agent-file-format.md`](references/agent-file-format.md) — the `.iblai` Markdown agent-file format ([`iblai/standard`](https://github.com/iblai/standard) pointer).

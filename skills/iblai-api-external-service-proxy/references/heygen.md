@@ -58,3 +58,12 @@ method shown here.
 
 **`video-status`** returns `data.status` = `processing` | `completed` (+`video_url`)
 | `failed` (+`error`).
+
+**List-read response shapes** — HeyGen wraps every payload under a top-level `data`:
+
+- `list-templates` → `data.templates[]` = `{ "template_id", "name" }`.
+- `list-avatars` → `data.avatars[]` = `{ "avatar_id", "avatar_name" }` (note `avatar_name`, not `name`).
+- `list-voices` → `data.voices[]` = `{ "voice_id", "name", "language" }`.
+- `generate-video` / `generate-template-video` → `data.video_id` (feed it to `video-status`).
+
+Because of that wrapper, read every upstream field as `resp.data.<field>` (e.g. `data.avatars`, `data.video_id`, `data.status`). See the integration guide's async-polling example for the generate → poll loop.

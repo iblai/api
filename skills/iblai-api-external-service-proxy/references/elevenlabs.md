@@ -44,4 +44,11 @@ invoke is an HTTP `POST` to the gateway regardless of the *upstream* method show
 |-------|----------|-------|
 | `text` | yes | text to synthesize |
 | `model_id` | yes | model id from `list-models` (e.g. `eleven_multilingual_v2`) |
-| `voice_settings` | no | `{stability, similarity_boost, …}` |
+| `voice_settings` | no | `{stability, similarity_boost, …}`; each `0.0`–`1.0` |
+
+**List-read response shapes** — where the ids come from:
+
+- `list-voices` → `{ "voices": [ { "voice_id", "name", "category", "labels": { "accent", "gender" } } ] }` — wrapped in a top-level `voices` array.
+- `list-models` → a **bare JSON array** `[ { "model_id", "name", "description" } ]` — not wrapped.
+
+`tts` response is `Content-Type: audio/mpeg` (binary MP3) — the `passthrough` bytes; write to a file, don't JSON-parse.

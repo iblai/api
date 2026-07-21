@@ -6,7 +6,7 @@
 
 Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 
-[![Skills](https://img.shields.io/badge/Skills-45-CC785C)](https://skills.sh/iblai/api)
+[![Skills](https://img.shields.io/badge/Skills-47-CC785C)](https://skills.sh/iblai/api)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-CC785C?logoColor=white)](https://claude.ai)
 [![Cursor](https://img.shields.io/badge/Cursor-000000)](https://cursor.com)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
@@ -123,6 +123,12 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-api-apply               /iblai-api-external-service-proxy
 ```
 
+### Platform & ecosystem (non-REST guides)
+
+```text
+/iblai-api-infrastructure      /iblai-api-ecosystem
+```
+
 ### What each skill does
 
 | Skill | Description |
@@ -172,6 +178,8 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-catalog-invitation` | Catalog invitations & licensing — platform/course/program invitations (bulk, blank, redeem), licenses & assignments, access requests, suggestions |
 | `/iblai-api-apply` | Application gate — applicant apply/renew/submit flows (drafts, files, fees, withdrawal), reviewer pipeline with per-student decisions, waivers & admin override, placement tests, course assignments, account provisioning, form authoring |
 | `/iblai-api-external-service-proxy` | Call third-party AI services (ElevenLabs TTS/voices, HeyGen avatar video) through the External Service Proxy — discover services, POST an envelope to invoke; provider keys stored server-side per org |
+| `/iblai-api-infrastructure` | Self-host & deploy the platform (non-REST guide) — AWS single/multi-server architecture, golden-AMI launch pipeline, `iblai-infra-cli` (Terraform + Ansible), edX SSO identity providers, and standing up OpenClaw/NemoClaw sandbox gateway servers |
+| `/iblai-api-ecosystem` | Map of the ibl.ai open-source family (non-REST guide) — the five repos (api, vibe, os, lms, infra-cli) + shared `@iblai` tooling: which to reach for when operating vs building vs forking vs deploying, plus the vibe/app-cli app-scaffolding quickstart |
 
 Skills live in [`skills/`](./skills). Read them, extend them, or write your own.
 
@@ -197,9 +205,11 @@ verified against the real API — not against docs or guesswork. The full contra
   `## Writes` (POST/PUT/PATCH/DELETE) → `## Example` (one real `curl`) → `## Notes`.
   Multi-resource skills group resources as `###` sub-headings inside Reads/Writes —
   Reads/Writes is always the top-level split. Mark every destructive or outward-facing
-  call (delete, send, invite) "confirm with the user first." Exhaustive lookup tables
-  (large field schemas, action catalogs) may live in a bundled `references/` file linked
-  from `SKILL.md` (and sample files in `assets/`) — keep `SKILL.md` the scannable primary.
+  call (delete, send, invite) "confirm with the user first." Material that would bloat the
+  primary — exhaustive lookup tables (field schemas, action catalogs) and the developer
+  docs' fuller concepts/architecture/guides/troubleshooting — may live in bundled
+  `references/*.md` files (and sample files in `assets/`), linked from a `## Reference
+  material` section; keep `SKILL.md` the scannable, endpoint-focused primary.
 - **Describe APIs, not UIs.** Never reference menus, tabs, buttons, or pages — the
   value is the endpoint, not the screen it used to live behind.
 - **Follow the naming + terminology rules.** Skill scope is encoded by prefix

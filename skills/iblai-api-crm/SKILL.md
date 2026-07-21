@@ -180,7 +180,20 @@ URLs — a detail different from stock DRF pagination.
 
 - **POST** `/api/crm/tags/` — create a tag.
 - **PATCH** `/api/crm/tags/{id}/` — update a tag.
-- **DELETE** `/api/crm/tags/{id}/` — delete a tag. Confirm with the user first.
+- **DELETE** `/api/crm/tags/{id}/` — delete a tag. Cascades — removes every
+  assignment on every person / organization / deal. Confirm with the user first.
+
+**Attach / detach on a host** (`{host}` = `persons` | `organizations` | `deals`;
+both need `Ibl.CRM/Tags/write`, a **separate** RBAC bucket from host-write — see
+[`references/workflows.md`](references/workflows.md) § Tagging):
+
+- **POST** `/api/crm/{host}/{id}/tags/` — attach an existing tag to a host record:
+  body `{ "tag_id": int }` (`≥ 1`). Returns `201` with `{ assignment_id, tag }`;
+  `409` if already attached (idempotent — carries the existing `assignment_id`, so
+  treat it as success); `404` if the tag isn't in your org.
+- **DELETE** `/api/crm/{host}/{id}/tags/{tag_id}/` — detach a tag (removes the
+  assignment row, not the tag). `204` on success; `404` if it wasn't attached. Not
+  idempotent — a repeat DELETE returns `404`; treat that as a no-op success.
 
 ## Example
 
@@ -217,3 +230,15 @@ Field-level request/response shape (**Mode** `req`/`opt`/`ro`) for every resourc
 enums and the confirmed filter query params, live in a reference file to keep this skill
 scannable: **[`references/schema.md`](references/schema.md)**. Read it when you need exact
 field names, types, defaults, or which filters a list `GET` accepts.
+
+## Reference material
+
+The endpoints and field schemas above are the authoritative, code-verified surface. These
+companion files (ported from the CRM developer guide) preserve the surrounding concepts,
+workflows, and guidance — read them for depth, not for endpoint truth:
+
+- **[`references/schema.md`](references/schema.md)** — field-level request/response shape (**Mode** `req`/`opt`/`ro`), enums, and the confirmed filter query params for every resource.
+- **[`references/guide.md`](references/guide.md)** — concepts & data model: system overview, write side-effects, the deal-status state machine, auth/security notes, the object graph, the resource map, and per-resource deletion/cascade behavior.
+- **[`references/quickstart.md`](references/quickstart.md)** — end-to-end worked walkthrough: capture a lead, find the seeded pipeline, open a deal, move it through stages, and close it won.
+- **[`references/workflows.md`](references/workflows.md)** — subsystem lifecycles: person onboarding (link / invite / merge / auto-link), deal lifecycle, activity timeline & auto-records, tagging, and CRM notifications (cross-refs `/iblai-api-notification`).
+- **[`references/operations.md`](references/operations.md)** — filtering & pagination, the RBAC role/permission matrix (cross-refs `/iblai-api-rbac`), the error reference, and best practices.

@@ -101,6 +101,7 @@ curl -X PATCH \
   `metadata` nor `delete_keys` → `400 {"non_field_errors": ["Provide 'metadata' to update or 'delete_keys' to remove keys."]}`.
   PUT with a non-object `metadata` → `400 {"error": "metadata must be a JSON object"}`.
   Cross-user without org-admin rights → `403`; unknown target user → `404` (see Concepts).
+  Missing or invalid `Authorization` header → `401 {"detail": "Authentication credentials were not provided."}`.
 
 ## Schema
 
@@ -120,3 +121,14 @@ GET, PATCH, and PUT all return the full metadata object:
   `updated_at` are read-only. `platform_key` echoes the org key; timestamps are
   ISO 8601.
 - DELETE returns `204 No Content` with an empty body.
+
+## Reference material
+
+The endpoints, schema, and errors above are the primary surface. This companion file
+(ported from the developer guide) preserves the surrounding concepts and guidance — read
+it for depth, not for endpoint truth:
+
+- [`references/guide.md`](references/guide.md) — what the store is for (the four data
+  categories), the four use-case patterns (preferences, feature flags, onboarding,
+  multi-org), best practices (PATCH-vs-PUT intent, structure/namespacing, performance,
+  security, error handling), and the schema-migration strategy.

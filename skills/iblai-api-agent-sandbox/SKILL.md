@@ -147,3 +147,20 @@ curl -X POST \
 - `claw_type` is `openclaw`, `ironclaw`, or `nemoclaw`; `gateway_token` authenticates
   the instance to its server. `gateway_token`, `auth_headers`, and `connection_params`
   are write-only (never returned by reads).
+
+## Reference material
+
+Concepts, architecture, response shapes, enums, and a full walkthrough — ported from the
+platform-integration guide — live alongside this skill. Read them when the endpoints above
+aren't enough:
+
+- **[`references/concepts.md`](references/concepts.md)** — how instances, model providers,
+  agent bindings, pairing, and config push fit together; register/response shapes with the
+  `status` / `deploy_state` enums; model-provider setup; skills in the push flow (CRUD in
+  **`/iblai-api-agent-skill`**); the two-sided device-pairing flow; **prebuilt agent-config
+  library by vertical (`iblai/claws`)**; the self-hosted `iblai-claw-setup` connection
+  orientation (server provisioning → **`/iblai-api-infrastructure`**); a
+  register→configure→push→chat walkthrough; and troubleshooting.
+- **[`references/workspace-files.md`](references/workspace-files.md)** — the `agent-config`
+  field → claw workspace-file map (`identity`→IDENTITY.md, `soul`→SOUL.md, …), the `config`
+  instance patch, and the blocked-path deny-list with what each protects.

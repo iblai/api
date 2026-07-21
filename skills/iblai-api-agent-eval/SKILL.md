@@ -17,8 +17,9 @@ agent against a dataset and grade the results.
   (The dev docs phrase this as `Authorization: Token <key>` — it is the same
   platform key; use **Api-Token**.)
 - **Path vars:** `{org}` = `$IBLAI_ORG`, `{username}` = `$IBLAI_USERNAME`.
-- **Host root:** `…/dm/api/ai-agent/orgs/{org}/users/{username}/evaluations/`.
-  Below, `…/evals` = that root.
+- **Host root:** `…/dm/api/ai-mentor/orgs/{org}/users/{username}/evaluations/`.
+  Below, `…/evals` = that root. (`ai-mentor` is the canonical mount; the `ai-agent`
+  spelling is an accept-only alias for the same routes.)
 - Not connected yet? Run **`/iblai-api-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
@@ -28,6 +29,9 @@ agent against a dataset and grade the results.
   hold graded test cases (input + expected output) for measuring agent quality.
   They are unrelated to an agent's knowledge/training datasets in
   **`/iblai-api-agent-dataset`** (RAG documents) — do not cross-wire the two.
+- **Eval data is org-scoped and isolated.** Datasets, items, runs, scores, and
+  score configs belong to `$IBLAI_ORG` alone — no other org can read them or
+  grade against them.
 - **Runs and judges are async task records.** Starting a run (`POST …/runs/`) or
   an LLM-as-Judge (`POST …/evaluate/`) dispatches a background task and returns
   **202** immediately with a task record that moves `pending → in_progress →
@@ -47,7 +51,7 @@ agent against a dataset and grade the results.
 
 ### Datasets
 
-- **GET** `https://api.iblai.app/dm/api/ai-agent/orgs/{org}/users/{username}/evaluations/datasets/` — list. Filters: `?name=` (substring), `?user_email=` (creator, exact).
+- **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/evaluations/datasets/` — list. Filters: `?name=` (substring), `?user_email=` (creator, exact).
 - **GET** `…/evaluations/datasets/{dataset_name}/` — get one.
 
 ### Dataset items
@@ -114,7 +118,7 @@ Start an experiment run against a dataset (runs async in the background):
 
 ```bash
 curl -X POST \
-  "https://api.iblai.app/dm/api/ai-agent/orgs/$IBLAI_ORG/users/$IBLAI_USERNAME/evaluations/datasets/support-qa/runs/" \
+  "https://api.iblai.app/dm/api/ai-mentor/orgs/$IBLAI_ORG/users/$IBLAI_USERNAME/evaluations/datasets/support-qa/runs/" \
   -H "Authorization: Api-Token $IBLAI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"run_name": "baseline-2026-06", "mentor_unique_id": "d17dc729-60fd-4363-81a0-f67d9318b03e"}'
@@ -174,3 +178,7 @@ CSV upload (multipart). Fields are optional unless marked **required**.
 - `name` **required** (≤255) · `data_type` (`NUMERIC`|`BOOLEAN`|`CATEGORICAL`) **required**
 - `categories`: array of `{value` (number)`, label` (string)`}` — for CATEGORICAL
 - `min_value` / `max_value` (numbers — for NUMERIC) · `description`
+
+## Reference material
+
+- [`references/guide.md`](references/guide.md) — the eval pipeline as ordered steps, judge-rubric guidance, and CSV upload/export limits and columns.
