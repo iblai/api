@@ -176,3 +176,14 @@ curl -X POST "https://api.iblai.app/dm/api/ai-proxy/orgs/$IBLAI_ORG/services/hey
   `404 …No credentials found…`.
 - The Authorization token is always the ibl **platform token** (Api-Token, platform
   admin) — **never** the provider key, which lives server-side.
+
+## Reference material
+
+The endpoints and per-action bodies above are the primary; these bundled references
+carry the exhaustive lookup material and the doc-sourced developer guides.
+
+- [`references/elevenlabs.md`](references/elevenlabs.md) — full ElevenLabs action catalog (upstream method + `path_template`, request/response modes, `path_params`) and the `tts` body.
+- [`references/heygen.md`](references/heygen.md) — full HeyGen action catalog plus the `generate-video` / `generate-template-video` bodies and the `video-status` shape.
+- [`references/overview.md`](references/overview.md) — proxy concept, service-discovery response shapes, the invoke request format, quick-reference table, and a client discovery example.
+- [`references/integration-guide.md`](references/integration-guide.md) — building dynamic integrations: parsing `path_template`, handling each `response_mode`, the reusable `ExternalProxyClient` class, and worked end-to-end examples.
+- [`references/errors.md`](references/errors.md) — the full error surface (every status with causes + solutions), credential setup, `credential_policy` resolution, troubleshooting, and best-practice client code.

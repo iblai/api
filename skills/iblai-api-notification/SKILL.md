@@ -153,3 +153,11 @@ curl -s \
   can move them back to `UNREAD`).
 - Template `toggle/` (platform-wide on/off for a type) is different from
   per-user `notification-preferences/` — don't confuse the two.
+
+## Reference material
+
+Doc-sourced companions to the endpoints above (concepts and catalogs — the API
+surface itself stays here in `SKILL.md`):
+
+- **[references/guide.md](references/guide.md)** — how notifications are generated (automatic vs the direct-send builder, with the builder flow, source types, and duplicate detection), SMTP/FCM channel setup, permissions/RBAC, the delivery/read lifecycle, and gotchas.
+- **[references/templates.md](references/templates.md)** — the notification-type catalog, template-inheritance semantics, the template-variable and HTML-sanitization reference, and the three system-managed types (human support, policy assignment, proactive-learner AI) with their per-type config.

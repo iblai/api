@@ -29,6 +29,11 @@ students may do — the org-wide "who can do what" surface under
 
 ## Concepts
 
+Every permission check resolves to one question — *can this identity perform this
+action on this resource?* — evaluated at two levels: **action** (the operation
+gate: `list`/`read`/`write`/`delete`/`action`) and **data** (field-level read /
+write masking). All RBAC state is scoped to the org.
+
 - **Resource paths are hierarchical** and rooted at a platform, e.g.
   `/platforms/{pk}/mentors/{mentor_id}/documents/{id}/`. A policy granted on a
   parent resource applies to all its children. In request bodies you supply the
@@ -124,7 +129,7 @@ and roles (platform is taken from the token; service accounts pass `platform_key
   ```json
   {
     "platform_key": "string (required)",
-    "name": "string (unique per org)",
+    "name": "string (unique per org; a UUID is generated if omitted)",
     "role_id": 0,
     "resources": ["/mentors/", "/usergroups/5/"],
     "users_to_add": [0],
@@ -151,7 +156,9 @@ and roles (platform is taken from the token; service accounts pass `platform_key
   ```
   Each resource must start and end with `/`. The response is an object keyed by
   each requested resource path, whose value is that resource's permission map
-  (action → allowed); the exact keys vary by resource type.
+  (action → allowed); the exact keys vary by resource type. The check is
+  ownership-aware — owner well-known roles apply automatically, so a resource's
+  creator sees their owner permissions here without an explicit policy.
 
 ### Agent access
 
@@ -228,3 +235,11 @@ Core RBAC objects (fields the serializers expose; `*` = list/JSON):
 - **Well-known role** (applied dynamically, not stored as a policy): supplies
   contextual `actions*` / `data_actions*` (and `override_*`) for owner-style and
   "everyone" grants; drives the `mentor-owner` / `document-owner` / … behavior.
+
+## Reference material
+
+- **[`references/permissions-reference.md`](references/permissions-reference.md)**
+  — the gating/role lookup complementing the endpoints above: which RBAC action
+  gates each endpoint, the built-in role catalog, permission-evaluation order and
+  owner roles, the `permissions.field` / `permissions.object` response metadata
+  and field masking, and the operations each resource type exposes.

@@ -31,7 +31,24 @@ Use when embedding an agent on an external website.
 
 ### Backend token provisioning
 
-- **GET** `https://api.iblai.app/dm/api/core/users/platforms/?username={username}&platform_key={org}` — the provisioned user's org/platform link record(s). Identify the user by `username` (or `user_id` / `email`). **`platform_key={org}` (or `org={org}`) is required** — the Platform API Token is authorized against it and the call `403`s without it. Returns a **list**; the fields the embed payload needs are `key` (the org key), `org`, `is_admin`, and `username`.
+- **GET** `https://api.iblai.app/dm/api/core/users/platforms/?username={username}&platform_key={org}` — the provisioned user's org/platform link record(s). Identify the user by `username` (or `user_id` / `email`). **`platform_key={org}` (or `org={org}`) is required** — the Platform API Token is authorized against it and the call `403`s without it. Returns a **list** with one record per matching org link (a Platform API Token is scoped to its own org, so exactly one); the fields the embed payload needs are `key` (the org key), `org`, `is_admin`, and `username`:
+  ```json
+  [
+    {
+      "user_id": 1234,
+      "username": "johndoe",
+      "email": "johndoe@example.com",
+      "key": "iblai",
+      "org": "iblai",
+      "platform_name": "IBL AI",
+      "lms_url": "https://learn.iblai.app",
+      "cms_url": "https://studio.learn.iblai.app",
+      "is_admin": false,
+      "is_staff": false,
+      "active": true
+    }
+  ]
+  ```
 
 ## Writes
 
@@ -154,3 +171,11 @@ curl -X PUT \
 - The SSO providers read uses the LMS host `learn.iblai.app`, not `api.iblai.app`.
 - A `404` on **GET** `…/sharable-link` just means no share link exists yet —
   **POST** to create one.
+
+## Reference material
+
+The full end-to-end backend-provisioning walkthrough — the SSO-replacement flow,
+security rationale, the provisioning behavior matrix, the annotated `ibl-data` example,
+the iframe URL template, and both delivery paths (query param + `postMessage`) with code —
+lives in **[`references/embed-guide.md`](references/embed-guide.md)**. Read it when wiring
+up server-to-server embed auth; the endpoints above are the quick reference.

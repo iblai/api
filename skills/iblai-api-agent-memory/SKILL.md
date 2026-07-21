@@ -139,6 +139,9 @@ curl -s \
 - Categories are org- + agent-scoped (`…/orgs/{org}/mentors/{mentor}/…`), not user-scoped
   like the memory endpoints.
 - There is no bulk-delete endpoint: to clear several memories, issue one DELETE per id.
+- Flat list reads (global memories, agent/mentor memories, categories) return a DRF page
+  envelope — `{ "count": n, "results": [...] }`; iterate `results`. The grouped
+  `mentor-memories/` read instead buckets memories by category (see Reads). DELETEs return `204`.
 
 ## Schema
 
@@ -161,3 +164,9 @@ curl -s \
 
 **Settings** (`memsearch-settings`): `auto_capture_enabled`, `use_memory_in_responses`
 (both boolean, default `true`), `updated_at` (ro).
+
+## Reference material
+
+Background that complements the endpoints above (not required to call the API):
+
+- [`references/concepts.md`](references/concepts.md) — how extraction and injection actually behave (background capture, single-LLM-call, 3-layer dedup, top-5 semantic recall), the default categories, the org → agent → user enablement cascade, embedding/dedup specs, and a symptom→fix table.

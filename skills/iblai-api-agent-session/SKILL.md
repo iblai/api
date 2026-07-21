@@ -112,3 +112,12 @@ curl "https://api.iblai.app/dm/api/ai-mentor/orgs/$IBLAI_ORG/users/$IBLAI_USERNA
 persisted at `Session.metadata["client_context"]` and read back as `client_context` in
 the session-messages response, the history export (a `client_context` field per item, or
 CSV column via `?to_csv=true`), and analytics `summary.client_context`.
+
+## Reference material
+
+- [`references/metadata-passthrough.md`](references/metadata-passthrough.md) — the
+  `metadata` pass-through companion: the `<CONTEXT METADATA>` prompt-injection format,
+  per-transport wire notes (SSE/WebSocket + the embedded-iframe `postMessage` channel),
+  session caching (send-once, replace-not-merge, ~2h TTL), the
+  one-agent-many-contexts pattern, and the storage/pipeline map (session
+  `client_context` vs. the per-message snapshot).
