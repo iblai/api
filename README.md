@@ -6,7 +6,7 @@
 
 Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 
-[![Skills](https://img.shields.io/badge/Skills-42-CC785C)](https://skills.sh/iblai/api)
+[![Skills](https://img.shields.io/badge/Skills-45-CC785C)](https://skills.sh/iblai/api)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-CC785C?logoColor=white)](https://claude.ai)
 [![Cursor](https://img.shields.io/badge/Cursor-000000)](https://cursor.com)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
@@ -197,7 +197,9 @@ verified against the real API — not against docs or guesswork. The full contra
   `## Writes` (POST/PUT/PATCH/DELETE) → `## Example` (one real `curl`) → `## Notes`.
   Multi-resource skills group resources as `###` sub-headings inside Reads/Writes —
   Reads/Writes is always the top-level split. Mark every destructive or outward-facing
-  call (delete, send, invite) "confirm with the user first."
+  call (delete, send, invite) "confirm with the user first." Exhaustive lookup tables
+  (large field schemas, action catalogs) may live in a bundled `references/` file linked
+  from `SKILL.md` (and sample files in `assets/`) — keep `SKILL.md` the scannable primary.
 - **Describe APIs, not UIs.** Never reference menus, tabs, buttons, or pages — the
   value is the endpoint, not the screen it used to live behind.
 - **Follow the naming + terminology rules.** Skill scope is encoded by prefix

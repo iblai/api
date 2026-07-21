@@ -113,10 +113,13 @@ administration.
   {
     "name": "string (required)",
     "platform_key": "string (required)",
-    "description": "string",
-    "permissions": "string[]"
+    "actions": "string[] (RBAC action strings, e.g. Ibl.Mentor/Mentors/read)",
+    "data_actions": "string[]"
   }
   ```
+  The permission list is **`actions`** (+ optional **`data_actions`**), not
+  `permissions`. See **`/iblai-api-rbac`** for the full role/policy model
+  (action namespaces, resource paths).
 - **PUT** / **PATCH** `…/roles/{id}/?include_global_roles=true` — update (same shape).
 - **DELETE** `…/roles/{id}/?include_global_roles=true&platform_key={org}` — delete. Destructive — confirm with the user first.
 

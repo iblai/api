@@ -49,6 +49,18 @@ DELETE is destructive — confirm with the user first.
 - `?is_default=true` on pipelines — the seeded pipeline; its response embeds its
   stages inline.
 
+## Pagination
+
+List `GET`s are page-numbered. Navigate with `?page={n}` and override the page
+size with `?page_size={n}` (default `50`). The list envelope is:
+
+```json
+{ "count": 137, "next_page": 3, "previous_page": 1, "results": [ /* … */ ] }
+```
+
+`next_page` / `previous_page` are page **numbers** (or `null` at the ends), not
+URLs — a detail different from stock DRF pagination.
+
 ## Reads
 
 ### Person
@@ -104,10 +116,16 @@ DELETE is destructive — confirm with the user first.
 - **POST** `/api/crm/persons/merge/` — merge duplicates into one: body
   `{ "primary_id": UUID, "duplicate_ids": [UUID, …] }`; reparents the duplicates'
   deals / activities / tags onto the primary. Destructive — confirm first.
-- **POST** `/api/crm/persons/{id}/invite/` — invite the person as a platform user:
-  body `{ "is_admin": bool, "is_staff": bool, "redirect_to": "url" }`.
+- **POST** `/api/crm/persons/{id}/invite/` — email an invitation to the person's
+  `primary_email`. Body (all optional): `is_admin` (bool), `is_staff` (bool),
+  `enrollment_config` (object, forwarded to auto-enroll the invitee),
+  `redirect_to` (url). Success returns the `invitation_id`; `409` if an active
+  invitation already exists for that email (the response carries the existing
+  `invitation_id`, so you can track / resend it), `422` if the person is already
+  linked to a platform user. Sends outward — confirm with the user first.
 - **POST** `/api/crm/persons/{id}/link-user/` — link the CRM person to an existing
-  platform user (sets `platform_user`).
+  platform user: body `{ "user_id": int }` (required; the user must already be an
+  active member of your org, else `403`). Sets `platform_user`.
 
 ### Organization
 
@@ -144,8 +162,12 @@ DELETE is destructive — confirm with the user first.
 - **PATCH** `/api/crm/deals/{id}/` — reposition `stage` within a pipeline (allowed).
 - **POST** `/api/crm/deals/{id}/move-stage/` — transition stage; body accepts
   `stage_code` (preferred) or `stage_id`.
-- **POST** `/api/crm/deals/{id}/won/` — close the deal as won.
-- **POST** `/api/crm/deals/{id}/lost/` — close the deal as lost.
+- **POST** `/api/crm/deals/{id}/won/` — close the deal as won. Body optional:
+  `stage_code` to target a specific `is_won` stage (defaults to the pipeline's
+  first `is_won` stage by `sort_order`).
+- **POST** `/api/crm/deals/{id}/lost/` — close the deal as lost. Body **requires**
+  a non-empty `lost_reason` (≤255; `400` if missing); optional `stage_code`
+  (defaults to the first `is_lost` stage).
 
 ### Activity
 
@@ -185,157 +207,13 @@ curl -X POST \
 - A CRM Person auto-links to a Platform user when a signup matches by email.
 - Stages are nested under a pipeline; deal transitions go through the deal
   actions (`move-stage/`, `won/`, `lost/`) rather than ad-hoc edits.
+- Every read is scoped to your org (the token's `platform`), so a record in
+  another org returns `404`, not `403` — existence is never leaked. Treat `404`
+  as "not found **or** not visible to you".
 
 ## Schema
 
-Field-level request/response shape for each resource, as exposed by the API
-(not the raw DB model). **Mode** is one of:
-
-- **req** — required on create (`POST`).
-- **opt** — optional; the listed default applies when omitted.
-- **ro** — read-only; server-set, ignored (or rejected) on write.
-
-Every resource also returns four read-only fields not repeated in the tables
-below: `id` (type per the [Resources](#resources) table — UUID for Person and
-Organization, int otherwise), `platform` (the org, resolved from your API
-token — you cannot set it or reference another org's id), `created_at`, and
-`updated_at`.
-
-### Person — `/api/crm/persons/`
-
-| Field             | Type           | Mode | Notes                                                                                  |
-| ----------------- | -------------- | ---- | -------------------------------------------------------------------------------------- |
-| `name`            | string ≤255    | req  | Full display name.                                                                     |
-| `primary_email`   | email          | opt  | Auto-links this Person to a platform user created with a matching email (case-insensitive). |
-| `emails`          | list           | opt  | Additional emails, free-form shape. Default `[]`.                                      |
-| `contact_numbers` | list           | opt  | Phone/contact numbers, free-form shape. Default `[]`.                                  |
-| `job_title`       | string ≤255    | opt  | Display only; not validated. Default `""`.                                             |
-| `organization`    | UUID           | opt  | An Organization in your org; cross-org references are rejected.                        |
-| `owner`           | int (user id)  | opt  | Internal account owner; must be an active member of your org.                          |
-| `platform_user`   | int (user id)  | ro   | Set when bound to a platform user — on email match, or via `link-user/`.               |
-| `lifecycle_stage` | enum           | opt  | `lead` \| `qualified` \| `opportunity` \| `customer` \| `churned`. Default `lead`.     |
-| `unique_id`       | string ≤128    | opt  | External system id; must be unique within your org when non-blank. Default `""`.       |
-| `active`          | bool           | ro   | Flipped to `false` when the Person is linked to a user or merged away.                 |
-| `tags`            | list           | ro   | Attached tag chips; manage via the tag actions below.                                  |
-| `metadata`        | object         | opt  | Free-form JSON for org-defined attributes. Default `{}`.                               |
-
-### Organization — `/api/crm/organizations/`
-
-| Field      | Type          | Mode | Notes                                                          |
-| ---------- | ------------- | ---- | -------------------------------------------------------------- |
-| `name`     | string ≤255   | req  | Unique per org (case-sensitive).                               |
-| `address`  | object        | opt  | Free-form JSON (street, city, country, …). Default `{}`.       |
-| `owner`    | int (user id) | opt  | Must be an active member of your org.                          |
-| `tags`     | list          | ro   | Attached tag chips; manage via the tag actions below.          |
-| `metadata` | object        | opt  | Free-form JSON for org-defined attributes. Default `{}`.       |
-
-### Pipeline — `/api/crm/pipelines/`
-
-| Field         | Type        | Mode | Notes                                                                       |
-| ------------- | ----------- | ---- | --------------------------------------------------------------------------- |
-| `name`        | string ≤255 | req  | Display name (e.g. 'B2B Sales', 'Renewals').                                |
-| `code`        | slug ≤64    | req  | Unique per org; lowercase letters, digits, hyphens.                         |
-| `is_default`  | bool        | opt  | At most one default per org — un-flag the old default first. Default `false`. |
-| `rotten_days` | int         | opt  | Days a Deal can sit in a stage before it's surfaced as stale. Default `30`. |
-| `stages`      | list        | ro   | Embedded PipelineStage objects (read inline on the pipeline).               |
-| `metadata`    | object      | opt  | Free-form JSON. Default `{}`.                                               |
-
-### PipelineStage — `/api/crm/pipelines/{pipeline_id}/stages/`
-
-| Field         | Type        | Mode | Notes                                                                           |
-| ------------- | ----------- | ---- | ------------------------------------------------------------------------------- |
-| `code`        | slug ≤64    | req  | Referenced by Deal stage moves (`stage_code`); unique within the pipeline.      |
-| `name`        | string ≤255 | req  | Display name for the stage.                                                     |
-| `probability` | int 0–100   | opt  | Win likelihood; used for revenue forecasting. Default `0`.                      |
-| `sort_order`  | int         | opt  | Ordering position within the pipeline. Default `0`.                             |
-| `is_won`      | bool        | opt  | Terminal won stage; moving a Deal here sets `status='won'`. Default `false`.    |
-| `is_lost`     | bool        | opt  | Terminal lost stage; moving a Deal here sets `status='lost'`. Default `false`.  |
-| `metadata`    | object      | opt  | Free-form JSON. Default `{}`.                                                   |
-| `pipeline`    | int         | ro   | Set from the URL path; a stage cannot move between pipelines.                   |
-
-A stage cannot be both `is_won` and `is_lost`.
-
-### LeadSource — `/api/crm/lead-sources/`
-
-| Field      | Type        | Mode | Notes                                                       |
-| ---------- | ----------- | ---- | ----------------------------------------------------------- |
-| `name`     | string ≤128 | req  | Display name for the lead source.                           |
-| `code`     | slug ≤64    | req  | Unique per org; lowercase letters, digits, hyphens.         |
-| `metadata` | object      | opt  | Free-form JSON. Default `{}`.                               |
-
-### Deal — `/api/crm/deals/`
-
-| Field                 | Type            | Mode | Notes                                                                                       |
-| --------------------- | --------------- | ---- | ------------------------------------------------------------------------------------------- |
-| `title`               | string ≤255     | req  | Short display name (e.g. 'Acme renewal — 2026').                                            |
-| `description`         | text            | opt  | Free-text notes. Default `""`.                                                              |
-| `lead_value`          | decimal(14,2)   | opt  | Estimated value in `currency`. Default `0`.                                                 |
-| `currency`            | string(3)       | opt  | ISO 4217 code. Default `USD`.                                                               |
-| `status`              | enum            | ro   | `open` \| `won` \| `lost`. Set by the deal actions; direct writes are rejected with `400`.  |
-| `lost_reason`         | string ≤255     | opt  | Set on a `lost` transition. Default `""`.                                                   |
-| `expected_close_date` | date            | opt  | Forecasted close date.                                                                      |
-| `closed_at`           | datetime        | ro   | Set when the Deal enters a won/lost stage; cleared on re-open.                              |
-| `person`              | UUID            | req  | Primary contact; must belong to your org. A Person with deals can't be deleted.            |
-| `organization`        | UUID            | opt  | Must belong to your org, and must match the Person's Organization when the Person has one.  |
-| `pipeline`            | int             | req  | Must belong to your org.                                                                    |
-| `stage`               | int             | req  | Must belong to `pipeline`. Change after create via `move-stage/`.                           |
-| `source`              | int (LeadSource)| opt  | Where the Deal originated; must belong to your org.                                         |
-| `owner`               | int (user id)   | opt  | Sales rep. Defaults to the calling user on create.                                          |
-| `tags`                | list            | ro   | Attached tag chips; manage via the tag actions below.                                       |
-| `metadata`            | object          | opt  | Free-form JSON. Default `{}`.                                                               |
-
-### Activity — `/api/crm/activities/`
-
-| Field           | Type          | Mode | Notes                                                                          |
-| --------------- | ------------- | ---- | ------------------------------------------------------------------------------ |
-| `title`         | string ≤255   | req  | Short summary (e.g. 'Discovery call').                                          |
-| `type`          | enum          | req  | `call` \| `meeting` \| `email` \| `note` \| `task` \| `lunch` \| `deadline`.   |
-| `location`      | string ≤255   | opt  | Meeting location / dial-in / venue. Default `""`.                              |
-| `comment`       | text          | opt  | Free-text notes. Default `""`.                                                 |
-| `schedule_from` | datetime      | opt  | Scheduled start. Null for instant log entries.                                 |
-| `schedule_to`   | datetime      | opt  | Scheduled end.                                                                 |
-| `is_done`       | bool          | opt  | Default `false`. Flip via `POST .../done/` (stamps `done_at`).                 |
-| `done_at`       | datetime      | ro   | Set the first time `is_done` becomes true.                                     |
-| `deal`          | int           | opt  | Either `deal` or `person` is required.                                         |
-| `person`        | UUID          | opt  | Either `deal` or `person` is required. When both are set, must be the Deal's Person. |
-| `owner`         | int (user id) | opt  | Defaults to the calling user on create.                                        |
-| `reminder_at`   | datetime      | opt  | When to remind the owner.                                                      |
-| `reminder_sent` | bool          | ro   | Set when a reminder has fired; prevents a duplicate reminder.                  |
-| `metadata`      | object        | opt  | Free-form JSON. Default `{}`.                                                  |
-
-### Tag — `/api/crm/tags/`
-
-| Field      | Type       | Mode | Notes                                                  |
-| ---------- | ---------- | ---- | ------------------------------------------------------ |
-| `name`     | string ≤64 | req  | Unique per org (case-sensitive).                       |
-| `color`    | hex string | opt  | `#RRGGBB` (six hex digits). Default `#888888`.         |
-| `metadata` | object     | opt  | Free-form JSON. Default `{}`.                          |
-
-**Attaching tags** (Tags are created via `/api/crm/tags/`, then attached to a
-Person, Organization, or Deal):
-
-- **POST** `/api/crm/{persons|organizations|deals}/{id}/tags/` — attach one or
-  more tags; body accepts `tag_ids` (list) or `tag_id`.
-- **DELETE** `/api/crm/{persons|organizations|deals}/{id}/tags/{tag_id}/` —
-  detach a tag. Confirm with the user first.
-
-### Enums
-
-- **lifecycle_stage** (Person): `lead`, `qualified`, `opportunity`, `customer`, `churned`.
-- **status** (Deal): `open`, `won`, `lost`.
-- **type** (Activity): `call`, `meeting`, `email`, `note`, `task`, `lunch`, `deadline`.
-
-### Filter query params
-
-Append to a list `GET` (results are paginated). Confirmed filters per resource:
-
-| Resource     | Filters                                                                                                                                   |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Person       | `lifecycle_stage`, `owner`, `organization`, `tags`, `created_at__gte`, `created_at__lte`, `metadata__has_key`                            |
-| Organization | `owner`, `name` (contains), `tags`                                                                                                        |
-| Pipeline     | `code` (exact), `name` (contains), `is_default`                                                                                           |
-| Stage        | `code` (exact), `is_won`, `is_lost`                                                                                                       |
-| Lead Source  | `code` (exact), `name` (contains)                                                                                                         |
-| Deal         | `status`, `pipeline`, `stage`, `owner`, `source`, `person`, `organization`, `tags`, `expected_close_date__gte/__lte`, `created_at__gte/__lte`, `metadata__has_key` |
-| Activity     | `type`, `is_done`, `owner`, `deal`, `person`, `schedule_from__gte/__lte`, `metadata__has_key`                                            |
-| Tag          | `name` (contains), `created_at__gte/__lte`                                                                                                |
+Field-level request/response shape (**Mode** `req`/`opt`/`ro`) for every resource, plus the
+enums and the confirmed filter query params, live in a reference file to keep this skill
+scannable: **[`references/schema.md`](references/schema.md)**. Read it when you need exact
+field names, types, defaults, or which filters a list `GET` accepts.

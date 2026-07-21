@@ -1,14 +1,14 @@
 ---
 name: iblai-api-agent-memory
-description: Manage an ibl.ai agent's memories via the platform API — list and filter memories (by category, user, email, date), add/edit/delete memories, and manage memory categories. Use when inspecting or curating what an agent remembers.
+description: Manage an ibl.ai agent's memories via the platform API — list and filter agent (mentor) memories (by category, user, email, date), curate global (cross-agent) memories, add/edit/delete memories, manage memory categories, and toggle capture/recall settings. Use when inspecting or curating what an agent remembers.
 ---
 
 # iblai-api-agent-memory
 
 Manage an agent's memories through the API: browse and filter what an agent has
-remembered, add / edit / delete individual memories, and manage the categories
-memories are filed under. Use when inspecting or curating what an agent
-remembers.
+remembered, curate global (cross-agent) memories, add / edit / delete individual
+memories, manage the categories memories are filed under, and control capture /
+recall settings. Use when inspecting or curating what an agent remembers.
 
 ## Auth & conventions
 
@@ -16,55 +16,100 @@ remembers.
 - **Header:** `Authorization: Api-Token $IBLAI_API_KEY` on every request.
 - **Path vars:** `{org}` = `$IBLAI_ORG`, `{username}` = `$IBLAI_USERNAME`,
   `{mentor}` = the agent's unique id (e.g. `d17dc729-60fd-4363-81a0-f67d9318b03e`).
-- **Two URL spellings:** agent memories are served under both the `ai-mentor` base
-  (used below) and a twin `ai-agent` base — `…/api/ai-agent/orgs/{org}/…/agents/{agent}/agent-memories/`
-  mirrors the `…/mentors/{mentor}/mentor-memories/` paths. **User-level** memories and
-  settings live on the `ai-agent` base
-  `https://api.iblai.app/dm/api/ai-agent/orgs/{org}/users/{username}` (written `{u}` below).
+- **Prefix / two spellings:** endpoints live under the `ai-mentor` base
+  `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}` (the leading `…` below). A twin
+  `ai-agent` base mirrors every route with the `mentor` path token swapped for `agent`
+  (`…/mentors/{mentor}/mentor-memories/` ↔ `…/agents/{agent}/agent-memories/`); either works.
+- **Two path bases:** user-scoped routes hang off `…/orgs/{org}/users/{username}` (written
+  `{u}` below); memory **categories** hang off `…/orgs/{org}/mentors/{mentor}` directly (no
+  user segment).
 - Not connected yet? Run **`/iblai-api-login`** first to populate `IBLAI_ORG`,
   `IBLAI_USERNAME`, and `IBLAI_API_KEY`.
 
+## Concepts
+
+Two PGVector-backed memory stores ("memsearch") sit behind these endpoints:
+
+- **Global memories** (`UserGlobalMemory`) — scoped to a user + org, shared across every
+  agent; facts any agent should know about the user.
+- **Agent (mentor) memories** (`UserMentorMemory`) — scoped to a user + one agent + a
+  **category**; what a single agent remembers about the user.
+
+**Categories** (`MentorMemoryCategory`, per agent) file agent memories and steer capture:
+each has a `slug`, an `extraction_prompt` (LLM hint for what to pull into that category),
+and `is_active` (whether it's used during extraction).
+
+**Capture & injection** are controlled per user via `memsearch-settings`:
+- `auto_capture_enabled` — agents auto-extract memories from conversations. Auto-extracted
+  rows carry `is_auto_generated: true`; memories you add via the API are `false`.
+- `use_memory_in_responses` — stored memories are injected into agent responses.
+
+An org-wide `enable_memsearch` flag gates the whole feature (see `memsearch-status`).
+
 ## Reads
 
-- **GET** `…/users/{username}/mentors/{mentor}/mentor-memories-list/?page={n}&page_size={n}&category={slug}&my_memory={bool}&user_id={id}&email={e}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — paged memory list.
-- **GET** `…/users/{username}/mentors/{mentor}/mentor-memories/?start_date=&end_date=&email=` — memories grouped by category.
-- **GET** `…/orgs/{org}/mentors/{mentor}/memory-categories/` — category list.
-- **GET** `{u}/global-memories/?session_id={id}&content={q}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — user-level (cross-agent) memories.
-- **GET** `{u}/agent-memories/` — the user's memories aggregated across all agents (per-agent list is `mentor-memories-list/` above).
-- **GET** `{u}/memsearch-settings/` — memory capture / recall settings.
+### Agent (mentor) memories
+
+- **GET** `…/users/{username}/mentors/{mentor}/mentor-memories-list/?page={n}&page_size={n}&category={slug}&my_memory={bool}&user_id={id}&email={e}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — paged flat list for one agent.
+- **GET** `…/users/{username}/mentors/{mentor}/mentor-memories/?my_memory={bool}&user_id={id}&email={e}&start_date=&end_date=` — the same memories grouped by category.
+- **GET** `{u}/mentor-memories/?mentor={agent}&user_id={id}&email={e}&start_date=&end_date=` — the user's agent memories across **all** agents; add `?mentor=` to scope to one. Twin spelling: `{u}/agent-memories/`.
+
+### Categories
+
+- **GET** `…/orgs/{org}/mentors/{mentor}/memory-categories/` — category list for one agent.
+
+### Global (cross-agent) memories
+
+- **GET** `{u}/global-memories/?user_id={id}&email={e}&session_id={uuid}&content={substr}&start_date={yyyy-MM-dd}&end_date={yyyy-MM-dd}` — user-level memories shared across every agent. Filters: `session_id` (the source session), `content` (case-insensitive substring), and the `start_date` / `end_date` created-at range.
+
+### Settings
+
+- **GET** `{u}/memsearch-settings/` — the user's capture / recall settings.
+- **GET** `{u}/memsearch-status/` — whether memsearch (`enable_memsearch`) is enabled for the org.
 
 ## Writes
 
-- **POST** `…/mentors/{mentor}/mentor-memories/` — add a memory:
+### Agent (mentor) memories
+
+- **POST** `…/users/{username}/mentors/{mentor}/mentor-memories/` — add a memory:
   ```json
   {
-    "category_slug": "string (required)",
-    "content": "string (required)"
+    "category_slug": "string (required, must match an existing category slug)",
+    "content": "string (required, ≥10 chars)"
   }
   ```
-- **PATCH** `…/mentor-memories/{memoryId}/` — edit a memory:
+- **PATCH** `…/users/{username}/mentors/{mentor}/mentor-memories/{memoryId}/` — edit a memory (send at least one field):
   ```json
   {
     "category_slug": "string",
-    "content": "string"
+    "content": "string (≥10 chars)"
   }
   ```
-- **DELETE** `…/mentor-memories/{memoryId}/` — delete one memory (no body). Destructive — confirm with the user first. Bulk delete = one call per memory.
-- **POST** `…/mentors/{mentor}/memory-categories/` — add a category:
+- **DELETE** `…/users/{username}/mentors/{mentor}/mentor-memories/{memoryId}/` — delete one memory (no body). Destructive — confirm with the user first. Bulk delete = one call per memory.
+
+### Categories
+
+- **POST** `…/orgs/{org}/mentors/{mentor}/memory-categories/` — add a category:
   ```json
   {
     "name": "string (required)",
-    "slug": "string (required)",
+    "slug": "string (required, unique per agent)",
     "description": "string",
     "extraction_prompt": "string",
-    "is_active": "boolean"
+    "is_active": "boolean (default true)"
   }
   ```
-- **PATCH** `…/memory-categories/{categoryId}/` — edit a category.
-- **DELETE** `…/memory-categories/{categoryId}/` — delete a category (no body). Destructive — confirm with the user first.
-- **POST** `{u}/global-memories/` — add a user-level memory: `{ "content": "string (required)" }`.
-- **DELETE** `{u}/global-memories/{memoryId}/` — delete one (no body). Destructive — confirm first.
-- **PUT** `{u}/memsearch-settings/` — update memory settings:
+- **PATCH** `…/orgs/{org}/mentors/{mentor}/memory-categories/{categoryId}/` — edit a category (any subset of the create fields).
+- **DELETE** `…/orgs/{org}/mentors/{mentor}/memory-categories/{categoryId}/` — delete a category (no body). Destructive — confirm with the user first.
+
+### Global (cross-agent) memories
+
+- **POST** `{u}/global-memories/` — add a user-level memory: `{ "content": "string (required, ≥10 chars)" }`.
+- **DELETE** `{u}/global-memories/{memoryId}/` — delete one (no body). Destructive — confirm with the user first.
+
+### Settings
+
+- **PUT** `{u}/memsearch-settings/` — update the user's capture / recall settings (send at least one field):
   ```json
   {
     "auto_capture_enabled": "boolean",
@@ -74,7 +119,7 @@ remembers.
 
 ## Example
 
-List the first page of memories filed under the `preferences` category since the start of the year:
+List the first page of one agent's memories filed under the `preferences` category since the start of the year:
 
 ```bash
 curl -s \
@@ -84,9 +129,35 @@ curl -s \
 
 ## Notes
 
-- Memories are filed under categories; `category_slug` on a memory must match an
-  existing category's `slug` from the categories endpoint.
-- The `mentor-memories-list/` filters stack — combine `category`, `user_id`,
-  `email`, and the date range to narrow results.
-- There is no bulk-delete endpoint: to clear several memories, issue one DELETE
-  per `memoryId`.
+- Memories are filed under categories; `category_slug` on an agent memory must match an
+  existing category's `slug` from the `memory-categories/` endpoint.
+- The `mentor-memories-list/` filters stack — combine `category`, `user_id`, `email`, and
+  the date range to narrow results; `my_memory=true` scopes the list to the caller's own memories.
+- **Global memories** filter by `user_id` / `email` plus `session_id`, `content` (substring),
+  and a `start_date` / `end_date` range — but **not** `category` or `my_memory`, which are
+  agent-memory-only (global memories aren't categorized).
+- Categories are org- + agent-scoped (`…/orgs/{org}/mentors/{mentor}/…`), not user-scoped
+  like the memory endpoints.
+- There is no bulk-delete endpoint: to clear several memories, issue one DELETE per id.
+
+## Schema
+
+**Memory object** (every memory read returns this; `UserMentorMemory` / `UserGlobalMemory`):
+
+| field | mode | notes |
+| --- | --- | --- |
+| `id` | ro | integer |
+| `content` | req (write) | the memory text; ≥10 chars |
+| `username`, `email` | ro | resolved from the user |
+| `mentor_id` | ro | agent memories only |
+| `platform` | ro | global memories only (org key) |
+| `category` | ro | agent memories only; nested category object |
+| `source_session_id` | ro | session the memory was extracted from, or null |
+| `is_auto_generated` | ro | `true` = LLM-extracted, `false` = added via API |
+| `created_at`, `updated_at` | ro | ISO 8601 |
+
+**Category object** (`MentorMemoryCategory`): `id` (ro), `name`, `slug` (unique per agent),
+`description`, `extraction_prompt`, `is_active` (default `true`), `created_at` (ro).
+
+**Settings** (`memsearch-settings`): `auto_capture_enabled`, `use_memory_in_responses`
+(both boolean, default `true`), `updated_at` (ro).
