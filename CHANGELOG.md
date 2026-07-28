@@ -4,6 +4,12 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-28
+
+### Documentation
+
+- add platform screenshots to the voice-agent walkthrough
+
 ## [0.2.1] - 2026-07-28
 
 ### Documentation
