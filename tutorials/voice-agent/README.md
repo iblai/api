@@ -208,6 +208,16 @@ Four Markdown files in the agent's workspace. No code, no schema, no deployment 
 | `USER.md` | Who it serves and what they care about |
 | `TOOLS.md` | What is actually wired up on this host — **and what is not** |
 
+Each one is a field on the agent, editable in the browser or over the API — the same keys you'll `PATCH` in Part 4:
+
+![The agent's prompt fields: Identity, Soul, User Context, Tools, Agents, Bootstrap](images/colin-config.png)
+
+**Behavior is prose, not configuration.** Opening `Soul` gives you a text editor. What you write there is what the agent does — no schema, no rule builder, no redeploy:
+
+![Editing the Soul field, which contains the agent's operating doctrine in plain English](images/colin-soul.png)
+
+That matters for who can own it: the person who knows the escalation policy can write the escalation policy.
+
 The `TOOLS.md` "not wired yet" section is the one people skip. Listing what the agent *cannot* reach is what stops it from implying capability it doesn't have:
 
 ```markdown
@@ -222,6 +232,10 @@ Be straight about this — do not imply otherwise:
 Everything in SOUL.md describing record lookups is the **target** behavior.
 On this host those paths are unimplemented — say so rather than inventing a record.
 ```
+
+`TOOLS.md` is also where the agent learns what its skills are actually called and how to invoke them on *this* host — note the `twilio-call` entry, which is what the agent consults before dialing:
+
+![Editing the Tools field, recording the host and the twilio-call skill invocation](images/colin-tools.png)
 
 Confirm the runtime picked the identity up:
 
@@ -300,6 +314,12 @@ curl -sS -X POST "$BASE/mentors/$MENTOR/claw-config/push-config/" -H "$AUTH"
 ```
 
 Expect `all_passed: true` from connectivity, pairing approved with `operator.read/write/admin`, and `last_config_push_status: success`.
+
+The same state is visible on the agent — connected instance, health, the `auto_push` toggle, and the last push:
+
+![The agent's Sandbox panel showing the connected instance, Auto Push on Save, and Push Configuration](images/colin-sandbox.png)
+
+`Run checks` is `test-connectivity/`; `Push` is `push-config/`. Everything in this tutorial is reachable both ways — the API is not a second-class path.
 
 > [!WARNING]
 > **Unrecognized `agent-config` keys are silently ignored.** `PATCH`ing `user` instead of `user_context` returns `200 OK` while dropping the value. With `auto_push` enabled, that pushes an *empty* USER.md and **blanks the file on your server**. Always re-`GET` the config and confirm every field is non-empty before pushing — and back the workspace files up first.
