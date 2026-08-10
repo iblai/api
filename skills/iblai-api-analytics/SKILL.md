@@ -1,148 +1,245 @@
 ---
 name: iblai-api-analytics
-description: Read ibl.ai analytics via the platform API across agents, content, and users — overview KPIs, users, topics, transcripts, costs, courses, programs, and audit — plus generate and download Data Reports. Scope per-agent or organization-wide. Use to pull usage, engagement, cost, catalog, or per-user learning data.
+description: Read ibl.ai analytics via the platform API — agent (chat) analytics, content (courses/programs/pathways/skills) analytics, org-wide KPIs, per-user learning data, and costs — plus generate and download Data Reports. Scope per-agent or organization-wide. Use to pull usage, engagement, cost, catalog, or per-user analytics.
 ---
 
 # iblai-api-analytics
 
-Read ibl.ai analytics from the API across all three scopes:
+Read ibl.ai analytics from the platform API. One `/api/analytics/` family serves
+every scope; the query params decide what you get:
 
-- **Agent analytics** — include `mentor_unique_id` to scope any metric to one agent.
-- **Organization / content analytics** — omit `mentor_unique_id` for org-wide
-  metrics, plus the catalog **Courses** and **Programs** breakdowns.
-- **User analytics** — a single user's enrollments, grades, time spent, engagement.
+- **Agent (chat) analytics** — add `mentor_unique_id` to scope any chat metric
+  (topics, sessions, conversations, ratings, costs, transcripts) to one agent.
+- **Content analytics** — `/api/analytics/content/`, keyed by `metric=courses` |
+  `programs` | `pathways` | `skills`, for catalog engagement and time spent.
+- **Organization-wide analytics** — omit `mentor_unique_id` for org totals.
+- **Per-user analytics** — a single user's enrollments, grades, time spent,
+  engagement, and cross-platform snapshot.
 
-Reads are read-only; the only writes are Data Reports.
+Reads are read-only; the only writes are Data Reports and a time-spent event.
+
+## The schema is the contract
+
+These endpoints live on the **Data Manager** service and its live OpenAPI schema
+is the single source of truth — the URLs and params below exist for orientation
+and **can drift between releases**. Validate against the schema before building
+requests:
+
+- **Schema (raw):** `https://api.iblai.app/dm/api/docs/schema/`
+- **Swagger UI:** `https://api.iblai.app/dm/api/docs/`
+
+```bash
+# Confirm the analytics paths you're about to call exist verbatim:
+curl -sS "https://api.iblai.app/dm/api/docs/schema/" -o /tmp/iblai_schema.yaml
+grep -nE "^  /api/analytics/" /tmp/iblai_schema.yaml
+```
+
+Treat any mismatch between this skill and the schema as a bug in the skill — the
+deployed schema wins.
 
 ## Auth & conventions
 
-- **Base URL:** `https://api.iblai.app`
+- **`dm_url`** = `https://api.iblai.app/dm` — analytics are **Data Manager**
+  endpoints reached through the gateway's `/dm` prefix. Every URL below is written
+  as `{dm_url}/api/analytics/<path>`; set `dm_url=https://api.iblai.app/dm` and use it
+  as the prefix.
 - **Header:** `Authorization: Api-Token $IBLAI_API_KEY` on every request.
-- **Path vars:** `{org}` = `$IBLAI_ORG`, `{username}` = `$IBLAI_USERNAME`,
-  `{mentor}` = an agent's unique id (**optional** — include for agent scope, omit
-  for org-wide).
-- **Host:** analytics live on **DM** at `…/dm/api/analytics/…`; **Audit** is on
-  DM under `…/dm/api/ai-mentor/…`.
-- **Chart params:** every chart passes `date_filter` (`today` | `7d` | `30d` |
-  `90d` | `custom`; `custom` adds `start_date` / `end_date`), `platform_key={org}`,
-  optional `mentor_unique_id={mentor}` (agent scope), and optional `usergroup_ids`.
-  Below, `…` = `https://api.iblai.app/dm/api` and a trailing `&platform_key={org}`
-  (plus `&mentor_unique_id={mentor}` when scoping to an agent) is implied as `&…`.
+- **Placeholders:**
+  - `{platform}` = your workspace key = `$IBLAI_ORG`. On the wire it is the
+    `platform_key` query param and the `orgs/{platform}` / `platforms/{platform}`
+    path segment — same value everywhere.
+  - `{username}` = `$IBLAI_USERNAME`.
+  - `{mentor}` = an agent's unique id — **optional**: include
+    `mentor_unique_id={mentor}` for agent scope, omit for org-wide.
+- **Shared query params (available on most endpoints):**
+  - `platform_key={platform}` — the workspace key (required on most reads).
+  - `date_filter` — `today` | `7d` | `30d` | `90d` | `all_time` | `custom`.
+    `custom` requires `start_date` **and** `end_date` (both `yyyy-MM-dd`).
+  - `mentor_unique_id={mentor}` — narrows any chat metric to one agent.
+  - `granularity` — `hour` | `day` | `week` | `month` (time-series endpoints).
+  - `usergroup_ids` — repeat to narrow results to specific user groups.
+  - `page` / `limit` — pagination on list/`details` endpoints.
+- Each endpoint below lists its own params; **required** ones are marked and enum
+  values are given inline. `[&param=value]` means optional.
 - Not connected yet? Run **`/iblai-api-login`** first.
 
 ## Reads
 
-### Overview / Users / Topics / Transcripts / Costs
+### Agent & org chat analytics
 
-These endpoints serve both **agent** scope and **organization-wide** scope;
-include `mentor_unique_id` for the former, omit it for the latter.
+The presence of `mentor_unique_id` is the only difference between agent scope and
+org-wide scope on every endpoint here.
 
-#### Overview
+- **GET** `{dm_url}/api/analytics/topics/?platform_key={platform}&date_filter=30d&metric=overview[&mentor_unique_id={mentor}][&granularity=day][&usergroup_ids=]`
+  — Messages / Topics / Conversations KPIs.
+  `metric` ∈ `overview` (default) | `sessions` | `ratings` | `highlighted`.
+- **GET** `{dm_url}/api/analytics/topics/details/?platform_key={platform}&date_filter=30d&page=1&limit=20&search=[&mentor_unique_id={mentor}]`
+  — topics table / bar chart.
+- **GET** `{dm_url}/api/analytics/conversations/?platform_key={platform}&date_filter=30d&metric=conversations[&mentor_unique_id={mentor}][&granularity=day]`
+  — conversation counts. `metric` ∈ `conversations` | `headline`.
+- **GET** `{dm_url}/api/analytics/sessions/?platform_key={platform}&date_filter=30d&metric=sessions[&mentor_unique_id={mentor}][&granularity=day]`
+  — sessions line chart. `metric` ∈ `sessions` | `headline`.
+- **GET** `{dm_url}/api/analytics/ratings/?platform_key={platform}&date_filter=30d&metric=ratings[&mentor_unique_id={mentor}][&granularity=day]`
+  — thumbs / rating breakdown.
+- **GET** `{dm_url}/api/analytics/time/?platform_key={platform}&date_filter=30d[&mentor_unique_id={mentor}][&granularity=hour]`
+  — access-time heatmap.
+- **GET** `{dm_url}/api/analytics/users/?platform_key={platform}&metric=active_users&date_filter=30d[&mentor_unique_id={mentor}]`
+  — user KPIs. `metric` (**required**) ∈ `currently_active` | `active_users` |
+  `registered_users` | `active_users_last_30d`.
+- **GET** `{dm_url}/api/analytics/users/details/?platform_key={platform}&date_filter=30d&page=1&limit=5&search=[&mentor_unique_id={mentor}]`
+  — user table.
 
-- **GET** `…/analytics/topics/?date_filter=30d&…` — Messages / Topics / Conversations KPIs.
-- **GET** `…/analytics/users/?metric=active_users_last_30d&date_filter=30d&…` — Active Users KPI.
-- **GET** `…/analytics/sessions/?date_filter={r}&…` — Sessions line chart.
-- **GET** `…/analytics/topics/details/?date_filter={r}&…` — Topics bar chart.
+### Transcripts
 
-#### Users
+- **GET** `{dm_url}/api/analytics/messages/?platform_key={platform}&search={user}&topic={topic}&sentiment={s}&min_messages=&max_messages=&page=1&limit=20[&mentor_unique_id={mentor}][&start_date=&end_date=]`
+  — transcript list (one row per session).
+- **GET** `{dm_url}/api/analytics/messages/details/?platform_key={platform}&session_id={id}[&mentor_unique_id={mentor}]`
+  — one full transcript. `session_id` **required**.
 
-- **GET** `…/analytics/users/?metric=registered_users&date_filter=30d&…`
-- **GET** `…/analytics/users/?metric=active_users&date_filter={r}&…`
-- **GET** `…/analytics/users/?metric=currently_active&date_filter=today&…`
-- **GET** `…/analytics/time/?date_filter={r}&…` — access-time heatmap.
-- **GET** `…/analytics/users/details/?date_filter={r}&page={n}&limit=5&search={q}&…` — user table.
+### Content analytics (courses / programs / pathways / skills)
 
-#### Topics
+Catalog engagement and time-spent, org-wide by default. Add `mentor_unique_id`
+to scope to content consumed via one agent.
 
-- **GET** `…/analytics/conversations?metric=conversations&date_filter={r}&…`
-- **GET** `…/analytics/topics/?date_filter=30d&…`
-- **GET** `…/analytics/ratings/?date_filter={r}&…`
-- **GET** `…/analytics/topics/details/?date_filter={r}&…`
+- **GET** `{dm_url}/api/analytics/content/?platform_key={platform}&metric=courses&date_filter=30d&include_overtime=false&page=1&limit=20[&mentor_unique_id={mentor}][&granularity=hour][&usergroup_ids=]`
+  — aggregated content analytics + paginated item list. `metric` (**required**)
+  ∈ `course`/`courses` | `program`/`programs` | `pathway`/`pathways` |
+  `skill`/`skills`. `include_overtime=true` adds a 7-day time-spent series
+  (courses only).
+- **GET** `{dm_url}/api/analytics/content/details/{content_id}/?platform_key={platform}&metric=courses&date_filter=30d&search=&page=1&limit=20[&time_metric=][&mentor_unique_id={mentor}]`
+  — detailed analytics for one content item (summary + per-user rows +
+  optional time series). `metric` **required**.
 
-#### Transcripts
+### Costs
 
-- **GET** `…/analytics/conversations?metric=headline&…`
-- **GET** `…/analytics/messages/?search={user}&topic={topic}&page={n}&limit=20&…` — transcript list.
-- **GET** `…/analytics/messages/details/?session_id={id}&…` — one transcript.
+- **GET** `{dm_url}/api/analytics/financial/?platform_key={platform}&metric=total_costs&date_filter=30d[&show_overtime=false][&comparison_days=][&fill_method=zero][&provider=][&llm_model=][&username=][&mentor_unique_id={mentor}]`
+  — cost KPIs / cost-per-day. `metric` (**required**) ∈ `total_costs` |
+  `weekly_costs` | `monthly_costs`. `fill_method` ∈ `zero` | `previous`.
+- **GET** `{dm_url}/api/analytics/financial/details/?platform_key={platform}&group_by=provider&date_filter=30d&metrics=total_costs,sessions&page=1&limit=20&search=[&provider=][&llm_model=][&username=][&mentor_unique_id={mentor}]`
+  — cost breakdown. `group_by` (**required**) ∈ `provider` | `llm_model` |
+  `username` | `mentor` | `platform` | `action`. `metrics` is comma-separated.
+- **GET** `{dm_url}/api/analytics/financial/invoice/?platform_key={platform}&start_date=&end_date=&include_breakdown=true[&username={username}][&usergroup_ids=]`
+  — invoice-style billing summary with optional per-line breakdown.
 
-#### Costs
+### Per-user analytics
 
-- **GET** `…/analytics/financial/?metric=weekly_costs&date_filter=all_time&…`
-- **GET** `…/analytics/financial/?metric=monthly_costs&date_filter=all_time&…`
-- **GET** `…/analytics/financial/?metric=total_costs&all_time=true&…`
-- **GET** `…/analytics/financial/?metric=total_costs&date_filter={r}&…` — cost/day chart.
-- **GET** `…/analytics/financial/details/?group_by=provider&date_filter={r}&…`
-- **GET** `…/analytics/financial/details/?metrics=total_costs,sessions&group_by=username&date_filter={r}&page={n}&limit={l}&search={q}&…`
-- **GET** `…/analytics/financial/details/?metric=total_costs&group_by=llm_model&date_filter={r}&…`
+A single user's own learning data. **RBAC-gated**, with a self-access bypass:
+a user reading **their own** data (username == the caller, or no username on
+`/analytics/user`) needs no analytics grant; reading someone else's requires a
+grant.
 
-### Content (Courses & Programs)
+- **GET** `{dm_url}/api/analytics/user?platform_key={platform}&username={username}&metrics=courses&date_filter=30d[&course_id=][&include_edx_progress=true][&overtime=false][&program_id=][&pathway_id=][&granularity=day][&mentor_unique_id={mentor}]`
+  — the signed-in user's own holistic snapshot (self-access; no grant needed).
+  Same shape as `learner/details`. `metrics` is comma-separated sections:
+  `courses` (default), `programs`, `pathways`, `agents`, `skills`, `credentials`,
+  `time_spent`.
+- **GET** `{dm_url}/api/analytics/learner/details?platform_key={platform}&username={username}&metrics=courses&date_filter=30d[&course_id=][&include_edx_progress=true][&overtime=false][&program_id=][&pathway_id=][&granularity=day][&mentor_unique_id={mentor}]`
+  — holistic snapshot of one user across catalog enrollments, agent engagement,
+  skills, credentials, and time spent. Same `metrics` sections as above. With
+  `course_id`, `include_edx_progress=true` folds in live edX progress
+  (completion, grade).
+- **GET** `{dm_url}/api/analytics/learners/?platform_key={platform}&username={username}&date_filter=30d&page=1&limit=20[&overtime=false][&granularity=day][&mentor_unique_id={mentor}]`
+  — unified learner analytics: cross-platform summary (username only) or
+  platform-specific detail (username + `platform_key`).
+- **GET** `{dm_url}/api/analytics/learners/list/?platform_key={platform}&search=&sort_by=&sort_order=&page=1&limit=20&date_filter=30d[&mentor_unique_id={mentor}]`
+  — paginated learner roster with per-user metrics (**platform admins only**;
+  `platform_key` **required**).
+- **GET** `{dm_url}/api/analytics/time-spent/user/?platform_key={platform}&start_date=&end_date=[&course_id=][&mentor_uuid=][&session_uuid=][&url=][&username=][&include_main_platform=]`
+  — total time spent (seconds) for the current authenticated user.
 
-Course-level and program-level analytics are org-wide catalog breakdowns
-(no `mentor_unique_id`) on the same `…/dm/api/analytics/…` family, keyed
-by course/program — analogous to the `details` grouping used by Costs (e.g.
-`group_by`). Exact `courses` / `programs` sub-paths are platform-specific; use
-the `…/analytics/…/details/` endpoints grouped by course/program, or capture the
-precise sub-path from the live API responses.
+### Audit (agent configuration changes)
 
-### User analytics
-
-A single user's own learning data (enrollments, grades, time spent, engagement,
-last access). RBAC-gated (`IsPlatformAdminOfUser | IsSelfAccess`).
-
-- **GET** `…/analytics/learners/?username={username}&limit={n}&page={n}&start_date=&end_date=&date_filter={r}` — unified user analytics (user info, summary metrics, per-platform results).
-- **GET** `…/analytics/learner/details?username={username}&start_date=&end_date=&date_filter={r}&metrics={…}` — detailed per-course analytics across catalog, agent, and credential data.
-
-(`…/analytics/learners/` and `…/analytics/learner/details` keep the platform's
-wire spelling.)
-
-### Audit
-
-- **GET** `https://api.iblai.app/dm/api/ai-mentor/orgs/{org}/users/{username}/mentors/audit-logs/?limit=20&offset={n}&mentor={mentor}[&action=0|1|2&actor_email=&from_date=&to_date=]`
+- **GET** `{dm_url}/api/ai-mentor/orgs/{platform}/users/{username}/mentors/audit-logs/?limit=20&offset=0&mentor={mentor}[&action=0|1|2][&actor_email=][&actor_username=][&from_date=][&to_date=]`
+  — audit trail of agent config changes. The `.../users/{username}/agents/audit-logs/`
+  path is the newer alias for the same log; `{username}` occupies the `user_id`
+  path segment.
 
 ### Data Reports
 
-Data Reports (`…/reports`) are the only writes: kick off a report, poll until
-complete, then download the finished CSV from the presigned URL.
+Data Reports are async: **POST** to kick one off (see Writes), then poll and
+download. Mentor/course scoping is optional — it only applies to agent reports
+(`mentor`) or course reports (`course_id`); org-wide reports need neither.
 
-- **GET** `…/reports/platforms/{org}/?mentor_id={mentorDbId}` — list reports + status.
-- **GET** `…/reports/platforms/{org}/{report_name}?mentor_unique_id={mentor}` — poll status until complete.
-- **GET** `{status.url}` — download the finished CSV.
+- **GET** `{dm_url}/api/reports/platforms/{platform}/[?mentor_id={mentorDbId}]`
+  — list available reports + latest status. `mentor_id` is optional; when given,
+  access is scoped to that agent.
+- **GET** `{dm_url}/api/reports/platforms/{platform}/{report_name}[?mentor_unique_id={mentor}]`
+  — status/details of one report type; poll until complete. `mentor_unique_id`
+  optional (agent reports only).
+- **GET** `{dm_url}/api/reports/platforms/{platform}/{task_id}/download?format=csv[&columns=][&bom=][&charset=]`
+  — download a completed report as CSV or JSON.
 
 ## Writes
 
-### Data Reports
+### Data Reports — Confirm with the user first
 
-- **POST** `…/reports/platforms/{org}/new` — generate a report:
+- **POST** `{dm_url}/api/reports/platforms/{platform}/new` — kick off (or re-fetch
+  the status of) a report. Only `report_name` is essential; everything else is
+  optional and depends on the report type. Then poll and download via the Reads
+  above.
   ```json
   {
-    "report_name": "string (e.g. ai-mentor-chat-history)",
-    "mentor": "uuid",
-    "usergroup_ids": "number[]",
+    "report_name": "string (report slug, e.g. ai-mentor-chat-history)",
     "start_date": "yyyy-MM-dd",
     "end_date": "yyyy-MM-dd",
+    "mentor": "uuid — agent (mentor) reports only",
+    "course_id": "string — course reports only",
+    "usergroup_ids": [1, 2],
+    "source": "string — host the report is requested from",
+    "query": "string — advanced SQL-like query, report permitting"
+  }
+  ```
+
+### Record time spent
+
+- **POST** `{dm_url}/api/analytics/orgs/{platform}/time/update/` — record a
+  time-spent event for the current user (required: `count`, `timestamp`, `url`):
+  ```json
+  {
+    "timestamp": "ISO-8601",
+    "count": 30,
+    "url": "string",
     "course_id": "string",
-    "query": "string"
+    "mentor_uuid": "uuid",
+    "block_id": "string",
+    "session_uuid": "uuid",
+    "metadata": {}
   }
   ```
 
 ## Example
 
 Org-wide Messages/Topics/Conversations KPIs (omit `mentor_unique_id`), then the
-same scoped to one agent:
+same scoped to one agent, then course content analytics:
 
 ```bash
-curl -s "https://api.iblai.app/dm/api/analytics/topics/?date_filter=30d&platform_key=$IBLAI_ORG" \
+dm_url="https://api.iblai.app/dm"
+
+curl -s "$dm_url/api/analytics/topics/?platform_key=$IBLAI_ORG&date_filter=30d&metric=overview" \
   -H "Authorization: Api-Token $IBLAI_API_KEY"
 
-curl -s "https://api.iblai.app/dm/api/analytics/topics/?date_filter=30d&platform_key=$IBLAI_ORG&mentor_unique_id=$MENTOR" \
+curl -s "$dm_url/api/analytics/topics/?platform_key=$IBLAI_ORG&date_filter=30d&metric=overview&mentor_unique_id=$MENTOR" \
+  -H "Authorization: Api-Token $IBLAI_API_KEY"
+
+curl -s "$dm_url/api/analytics/content/?platform_key=$IBLAI_ORG&metric=courses&date_filter=30d" \
   -H "Authorization: Api-Token $IBLAI_API_KEY"
 ```
 
 ## Notes
 
-- Same endpoints serve agent and org/content scope — the presence of
-  `mentor_unique_id` is the only difference.
-- `date_filter=custom` requires both `start_date` and `end_date` (`yyyy-MM-dd`).
-- `usergroup_ids` narrows any chart (and a report) to specific user groups.
-- For *finding* agents/content use `/iblai-api-search`; for recommendations use
-  `/iblai-api-search`.
+- **Schema first.** Re-fetch `{dm_url}/api/docs/schema/` and confirm paths/params
+  before shipping requests; this skill can lag the deployment.
+- **Same endpoints, two scopes.** `mentor_unique_id` present ⇒ agent scope;
+  absent ⇒ org-wide. `platform_key={platform}` is your workspace key throughout.
+- **`date_filter=custom`** requires both `start_date` and `end_date` (`yyyy-MM-dd`).
+- **Cost values are already user-facing** — the financial endpoints return
+  platform-marked-up USD. Consume as-is; do not re-apply any markup.
+- **Costs are best-effort** (a separate datastore) — a null/empty cost block
+  means the cost store was unreachable, not zero spend.
+- **Time is in seconds** on `time-spent/user/` and content time-spent fields.
+- **Per-user RBAC:** self-access (own username, or no username on `/analytics/user`)
+  needs no grant; reading another user requires an analytics grant, and
+  `learners/list/` requires platform admin. Say **"user"**, not "learner".
+- **External content:** content used by your users but owned elsewhere is marked
+  `external` with limited metadata.
+- For *finding* agents/content and recommendations, use `/iblai-api-search`.
