@@ -4,6 +4,12 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-08-25
+
+### Documentation
+
+- note tenant-admin cross-user access on memsearch-settings
+
 ## [0.2.2] - 2026-07-28
 
 ### Documentation
