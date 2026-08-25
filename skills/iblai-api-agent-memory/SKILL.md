@@ -64,7 +64,7 @@ An org-wide `enable_memsearch` flag gates the whole feature (see `memsearch-stat
 
 ### Settings
 
-- **GET** `{u}/memsearch-settings/` — the user's capture / recall settings.
+- **GET** `{u}/memsearch-settings/` — the user's capture / recall settings. Tenant admins may read another user's settings by putting that user's username in the `{username}` path segment; non-admins are restricted to their own (any other `{username}` resolves back to the caller).
 - **GET** `{u}/memsearch-status/` — whether memsearch (`enable_memsearch`) is enabled for the org.
 
 ## Writes
@@ -109,7 +109,7 @@ An org-wide `enable_memsearch` flag gates the whole feature (see `memsearch-stat
 
 ### Settings
 
-- **PUT** `{u}/memsearch-settings/` — update the user's capture / recall settings (send at least one field):
+- **PUT** `{u}/memsearch-settings/` — update the user's capture / recall settings (send at least one field). Tenant admins may update another user's settings by putting that user's username in the `{username}` path segment; non-admins are restricted to their own (any other `{username}` resolves back to the caller):
   ```json
   {
     "auto_capture_enabled": "boolean",
