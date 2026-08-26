@@ -1,6 +1,6 @@
 ---
 name: iblai-api-analytics
-description: Read ibl.ai analytics via the platform API — agent (chat) analytics, content (courses/programs/pathways/skills) analytics, org-wide KPIs, per-user learning data, and costs — plus generate and download Data Reports. Scope per-agent or organization-wide. Use to pull usage, engagement, cost, catalog, or per-user analytics.
+description: Read ibl.ai analytics via the platform API — agent (chat) analytics, content (courses/programs/pathways/skills) analytics, org-wide KPIs, per-user learning data, costs, and fine-grained LLM usage (per-model/-agent/-user cost, tokens, latency) — plus generate and download Data Reports. Scope per-agent or organization-wide. Use to pull usage, engagement, cost, catalog, or per-user analytics.
 ---
 
 # iblai-api-analytics
@@ -120,6 +120,41 @@ to scope to content consumed via one agent.
   `username` | `mentor` | `platform` | `action`. `metrics` is comma-separated.
 - **GET** `{dm_url}/api/analytics/financial/invoice/?platform_key={platform}&start_date=&end_date=&include_breakdown=true[&username={username}][&usergroup_ids=]`
   — invoice-style billing summary with optional per-line breakdown.
+
+### LLM usage (cost / tokens / latency)
+
+Fine-grained LLM cost/usage/latency for the UI, proxied from the tracing
+backend and **tenant-scoped server-side** (the platform filter is injected from
+your key, never taken from input). One `GET {dm_url}/api/analytics/llm-usage/`
+serves three resources via the `resource` param; every `measures`, `aggregation`,
+`group_by`, and `order_by` value is whitelisted (a bad value is a `400`).
+
+- **GET** `{dm_url}/api/analytics/llm-usage/?platform_key={platform}&resource=metrics&measures=total_cost&aggregation=sum&date_filter=30d[&group_by=model][&granularity=day][&view=observations][&order_by=total_cost][&direction=desc][&limit=50][&mentor_unique_id={mentor}][&username=][&session_id=][&trace_name=][&llm_model=]`
+  — aggregate metrics (default resource). `measures` (comma-separated) ∈
+  `total_cost` | `input_tokens` | `output_tokens` | `total_tokens` | `count` |
+  `latency`. `aggregation` ∈ `sum` | `avg` | `count` | `min` | `max` | `p50` |
+  `p75` | `p90` | `p95` | `p99`. `group_by` ∈ `type` | `model` | `tags` |
+  `environment`. `granularity` ∈ `day` | `week` | `month` (omit for a flat
+  aggregate — there is no `hour`). `view` ∈ `observations` (default) | `scores`.
+- **GET** `{dm_url}/api/analytics/llm-usage/?platform_key={platform}&resource=observations&page=1&limit=50[&username=][&trace_name=][&llm_model=][&trace_id={id}][&observation_id={id}]`
+  — row-level generation drill-down, page-paginated (`meta` carries `totalItems`
+  / `totalPages`). `&trace_id={id}` scopes to one trace's observations;
+  `&observation_id={id}` fetches one observation. `session_id` is **rejected
+  `400`** here (observations can't filter by session — scope via `resource=traces`
+  then drill in by `trace_id`); `mentor_unique_id` is likewise **rejected** on
+  observations.
+- **GET** `{dm_url}/api/analytics/llm-usage/?platform_key={platform}&resource=traces&order_by=timestamp&direction=desc&page=1&limit=50[&username=][&session_id=][&trace_name=][&llm_model=][&trace_id={id}][&mentor_unique_id={mentor}]`
+  — per-user / per-session trace listing (the drill-down the Metrics API can't
+  group by). `order_by` ∈ `timestamp` (default) | `name` | `username` |
+  `session_id`; `direction` ∈ `asc` | `desc`. `&trace_id={id}` fetches one trace.
+  Unlike observations, traces **are** mentor-scopable via `mentor_unique_id`.
+
+All three return the same envelope: `{ "resource": "…", "data": [...], "meta": {...} }`.
+`limit` caps at `1000`. A get-by-id (`trace_id` on traces, `observation_id` on
+observations) whose record belongs to another tenant returns **`404`** — existence
+is never leaked. An unreachable/erroring tracing backend returns **`502`** (distinct
+from a `500` bug). `date_filter=all_time` on `metrics` falls back to a fixed lower
+bound (the backing Metrics API requires bounded timestamps).
 
 ### Per-user analytics
 
