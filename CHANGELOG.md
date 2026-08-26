@@ -4,6 +4,12 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-08-26
+
+### Documentation
+
+- document edX user-role catalog and bulk sync
+
 ## [0.2.3] - 2026-08-25
 
 ### Documentation
