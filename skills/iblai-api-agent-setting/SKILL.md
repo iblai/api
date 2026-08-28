@@ -48,6 +48,7 @@ when configuring an agent's basic identity and capabilities.
     "enable_claw": "boolean",
     "enable_memory_component": "boolean",
     "enable_multi_query_rag": "boolean",
+    "enable_computational_runtime": "boolean",
     "forkable": "boolean"
   }
   ```
@@ -76,6 +77,8 @@ curl -X PUT \
 ## Notes
 
 - A field left out of the PUT is left unchanged — never resend the whole object.
+- `enable_computational_runtime` (the in-process code interpreter) is now returned by
+  the settings **GET** as well as accepted by the PUT; it was previously write-only.
 - `categories` expects numeric category ids from the categories endpoint, not names.
 - Deletion and forking are scoped to `{username}`; settings reads/writes use the
   `users/{username}/mentors/{mentor}/` path.
