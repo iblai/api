@@ -4,6 +4,11 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 ## [Unreleased]
 
+### Documentation
+
+- document `enable_computational_runtime` on agent settings — it is now returned by the
+  settings GET as well as accepted by the PUT.
+
 ## [0.2.4] - 2026-08-26
 
 ### Documentation
