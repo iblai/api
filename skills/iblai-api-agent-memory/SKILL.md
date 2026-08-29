@@ -1,6 +1,6 @@
 ---
 name: iblai-api-agent-memory
-description: Manage an ibl.ai agent's memories via the platform API — list and filter agent (mentor) memories (by category, user, email, date), curate global (cross-agent) memories, add/edit/delete memories, manage memory categories, and toggle capture/recall settings. Use when inspecting or curating what an agent remembers.
+description: Manage an ibl.ai agent's memories via the platform API — list and filter agent (mentor) memories (by category, user, email, date), curate global (cross-agent) memories, curate shared agent knowledge injected into every user's chat, add/edit/delete memories, manage memory categories, and toggle capture/recall settings. Use when inspecting or curating what an agent remembers.
 ---
 
 # iblai-api-agent-memory
@@ -34,6 +34,12 @@ Two PGVector-backed memory stores ("memsearch") sit behind these endpoints:
   agent; facts any agent should know about the user.
 - **Agent (mentor) memories** (`UserMentorMemory`) — scoped to a user + one agent + a
   **category**; what a single agent remembers about the user.
+- **Agent knowledge** (`MentorMemory`) — scoped to one agent (org + mentor), **not** any
+  user and **not** categorized. Manually curated (never auto-extracted), it is injected into
+  **every** user's chat with that agent as an `## Agent Knowledge` block, gated by the agent's
+  `enable_memory_component` and each user's `use_memory_in_responses`. This is shared "how the
+  agent should behave / what it should always know" content, distinct from the per-user stores
+  above.
 
 **Categories** (`MentorMemoryCategory`, per agent) file agent memories and steer capture:
 each has a `slug`, an `extraction_prompt` (LLM hint for what to pull into that category),
@@ -57,6 +63,10 @@ An org-wide `enable_memsearch` flag gates the whole feature (see `memsearch-stat
 ### Categories
 
 - **GET** `…/orgs/{org}/mentors/{mentor}/memory-categories/` — category list for one agent.
+
+### Agent knowledge (shared)
+
+- **GET** `…/orgs/{org}/mentors/{mentor}/agent-memories/?page={n}&page_size={n}` — paged list of the agent's shared knowledge entries (DRF page envelope; `page_size` default 20, max 100). This path has **no** `users/{username}` segment — do not confuse it with the user-scoped `{u}/agent-memories/` twin spelling above, which lists one user's per-agent memories.
 
 ### Global (cross-agent) memories
 
@@ -102,6 +112,20 @@ An org-wide `enable_memsearch` flag gates the whole feature (see `memsearch-stat
 - **PATCH** `…/orgs/{org}/mentors/{mentor}/memory-categories/{categoryId}/` — edit a category (any subset of the create fields).
 - **DELETE** `…/orgs/{org}/mentors/{mentor}/memory-categories/{categoryId}/` — delete a category (no body). Destructive — confirm with the user first.
 
+### Agent knowledge (shared)
+
+- **POST** `…/orgs/{org}/mentors/{mentor}/agent-memories/` — add a shared knowledge entry:
+  ```json
+  { "content": "string (required, ≥10 chars)" }
+  ```
+  Dedups on a content hash: an identical entry returns `409` (`{"error": "Memory already exists"}`) rather than a duplicate; a new one returns `201` with the created object.
+- **PATCH** `…/orgs/{org}/mentors/{mentor}/agent-memories/{memoryId}/` — replace an entry's content:
+  ```json
+  { "content": "string (required, ≥10 chars)" }
+  ```
+  If the new content collides with another of the agent's entries, returns `409`.
+- **DELETE** `…/orgs/{org}/mentors/{mentor}/agent-memories/{memoryId}/` — delete one entry (no body, `204`). Destructive — confirm with the user first.
+
 ### Global (cross-agent) memories
 
 - **POST** `{u}/global-memories/` — add a user-level memory: `{ "content": "string (required, ≥10 chars)" }`.
@@ -138,6 +162,10 @@ curl -s \
   agent-memory-only (global memories aren't categorized).
 - Categories are org- + agent-scoped (`…/orgs/{org}/mentors/{mentor}/…`), not user-scoped
   like the memory endpoints.
+- **Two things share the `agent-memories` name.** The user-scoped `{u}/agent-memories/` (under
+  `…/users/{username}`) is the twin spelling of one user's per-agent memories; the org+agent-scoped
+  `…/orgs/{org}/mentors/{mentor}/agent-memories/` (no user segment) is the **shared agent knowledge**
+  store. Different data, different path — pick by whether a `users/{username}` segment is present.
 - There is no bulk-delete endpoint: to clear several memories, issue one DELETE per id.
 - Flat list reads (global memories, agent/mentor memories, categories) return a DRF page
   envelope — `{ "count": n, "results": [...] }`; iterate `results`. The grouped
@@ -158,6 +186,19 @@ curl -s \
 | `source_session_id` | ro | session the memory was extracted from, or null |
 | `is_auto_generated` | ro | `true` = LLM-extracted, `false` = added via API |
 | `created_at`, `updated_at` | ro | ISO 8601 |
+
+**Agent-knowledge object** (`MentorMemory`; returned by the shared `agent-memories` endpoints):
+
+| field | mode | notes |
+| --- | --- | --- |
+| `id` | ro | integer |
+| `mentor_id` | ro | the agent's unique id |
+| `mentor_name` | ro | the agent's name |
+| `content` | req (write) | the knowledge text; ≥10 chars |
+| `created_by` | ro | username of the curator, or `null` (service/API-key callers) |
+| `created_at`, `updated_at` | ro | ISO 8601 |
+
+No `category`, `is_auto_generated`, or user fields — agent knowledge is shared and manually curated.
 
 **Category object** (`MentorMemoryCategory`): `id` (ro), `name`, `slug` (unique per agent),
 `description`, `extraction_prompt`, `is_active` (default `true`), `created_at` (ro).
