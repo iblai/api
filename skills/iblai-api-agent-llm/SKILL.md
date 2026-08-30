@@ -52,5 +52,10 @@ curl -X PUT \
 
 - Pull the provider/model cards first, then send exactly one `llm_provider` +
   `llm_name` pair that appears in that list — values must match a real card.
+- `mentor_id` scopes the request to an agent and 404s if that agent does not exist
+  in the org; it does **not** narrow the cards to one provider. It used to, for
+  agents on the Google ADK/A2A and OpenAI Agents SDK backends, which were locked
+  to a single provider — those backends were retired in DM 4.360.0, so every agent
+  now gets the org's full authorized list.
 - Selection persists through the shared `settings/` endpoint, so it sits
   alongside the other configuration fields on the same agent.

@@ -50,6 +50,11 @@ curl -X PUT \
 
 ## Notes
 
+- `available-tools/` returns the same set for every agent — the tools flagged for
+  the base agent. It used to vary by agent backend; the Google ADK/A2A, OpenAI
+  Assistants and OpenAI Agents SDK backends were retired in DM 4.360.0 and every
+  agent now runs on the base agent, so an agent that previously used one of those
+  backends sees a **larger** list than before.
 - `tool_slugs` is the full enabled set — slugs left out of the array are disabled.
 - Pull valid slugs from the `available-tools/` endpoint before writing.
 - Set `can_use_tools` to `false` to turn tools off entirely without clearing the
