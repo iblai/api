@@ -6,7 +6,7 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 ### Changed
 
-- `iblai-api-agent-tool`: note that `available-tools/` now returns the same base-agent tool set for every agent. It used to vary by agent backend; the Google ADK/A2A, OpenAI Assistants and OpenAI Agents SDK backends were retired in DM 4.360.0, so an agent that previously ran on one of them now sees a larger list.
+- `iblai-api-agent-tool`: note that `available-tools/` now returns the same base-agent tool set for every agent. It used to vary by agent backend; the Google ADK/A2A, OpenAI Assistants and OpenAI Agents SDK backends were retired in DM 4.362.0, so an agent that previously ran on one of them now sees a larger list.
 - `iblai-api-agent-llm`: note that `mentor-llms/?mentor_id=` scopes and validates the agent but no longer narrows the provider/model cards to a single provider. That narrowing only applied to the retired, provider-locked backends; every agent now gets the org's full authorized list.
 
 ### Added
