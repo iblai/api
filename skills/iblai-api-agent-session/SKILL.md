@@ -148,7 +148,9 @@ the prompt but never restricts retrieval.
 **`document_filter`** (hard) — an optional JSON object (`dict[str, str|int|float|bool] |
 null`, `BaseConsumerPayload.document_filter`) that scopes RAG retrieval to documents whose
 ingested `custom_metadata` is compatible with the filter. It never touches the prompt and
-is **not** persisted on the session (per-turn only).
+is **not** persisted on the session (per-turn only). The keys/values here match the
+`custom_metadata` you attach when adding documents — see `/iblai-api-agent-dataset` for
+tagging documents at ingestion (the `custom_metadata` field on `documents/train/`).
 
 - **Keys** must be flat and alphanumeric/underscore (`^\w+$`) — no `__`, no ORM-style
   lookup suffixes (`__icontains`, etc.). **Values** must be scalars (string, number, or
