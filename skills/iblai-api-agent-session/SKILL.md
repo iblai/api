@@ -23,9 +23,22 @@ from `/iblai-api-login`.
 
 ## Concepts
 
-**`metadata` → `client_context` passthrough.** Every chat turn (WS or SSE) may carry a
-`metadata` object of arbitrary key/values (`BaseConsumerPayload.metadata`). The runner
-folds it into the prompt the agent sees, so the agent can tailor its reply, and the
+**Two independent context fields — one soft, one hard.** A chat turn can carry both
+`metadata` (soft) and `document_filter` (hard); they do different jobs and don't
+substitute for each other:
+
+- **`metadata` (soft)** — steers *how the agent reasons*. It's appended to the prompt and
+  persisted; it never restricts which documents RAG can retrieve.
+- **`document_filter` (hard)** — steers *which documents RAG may retrieve*. It's a
+  document-level allow-list applied in the vector store; it does not touch the prompt.
+
+Passing `metadata` alone narrows nothing in retrieval; passing `document_filter` alone
+scopes retrieval without giving the agent any extra prose context. Use both when you want
+both effects.
+
+**`metadata` → `client_context` passthrough (soft).** Every chat turn (WS or SSE) may
+carry a `metadata` object of arbitrary key/values (`BaseConsumerPayload.metadata`). The
+runner folds it into the prompt the agent sees, so the agent can tailor its reply, and the
 consumer persists it on the session as `Session.metadata["client_context"]`. It is
 **session-level**: each turn's `metadata` overwrites the session's `client_context`, so
 it sticks across turns until you send new keys. Use it to tell one deployed agent
@@ -33,6 +46,20 @@ it sticks across turns until you send new keys. Use it to tell one deployed agen
 prompt. It then echoes back on every read below. The sibling field `page_content` is
 also appended to the prompt, but — unlike `metadata` — is stripped before the message is
 saved.
+
+**`document_filter` → retrieval scoping (hard).** An optional
+`BaseConsumerPayload.document_filter` object (`{key: scalar}`) restricts RAG retrieval to
+documents whose ingested `custom_metadata` is compatible with the filter. It is matched
+**inclusively per key**: a document is kept if, for **every** filter key, it either
+*matches that key's value* **or** *does not carry that key at all*; it is excluded only
+when it carries the key with a **different** value. Multiple keys are AND'd. Because a
+document that lacks a key is never excluded by it, generic/untagged material always
+survives — e.g. `{"stateCode":"CA"}` keeps California docs **and** generic docs that carry
+no `stateCode`, while dropping docs tagged for other states. Unlike `metadata`,
+`document_filter` is **not** session-sticky — it applies only to the turn that sends it —
+and it never appears in the prompt or saved history. It only shrinks the retrieval
+candidate set; top-k similarity ranking still runs afterward, so an eligible document is
+not guaranteed to be retrieved if higher-scoring eligible documents fill the top-k.
 
 ## Reads
 
@@ -60,14 +87,18 @@ saved.
     "prompt": "Hello",
     "flow": { "name": "<agent unique_id>", "tenant": "<org key>" },
     "page_content": "optional text appended to the prompt, stripped before saving",
-    "metadata": { "any": "client context keys" }
+    "metadata": { "any": "soft client context keys" },
+    "document_filter": { "stateCode": "CA" }
   }
   ```
   `session_id` (a UUID4) and `flow` are **required**; `flow.name` selects the agent (its
   `unique_id`, or a slug/name) and `flow.tenant` is the org key. `prompt` and
-  `page_content` default to empty, `metadata` to null. `metadata` is passthrough — stored
-  on the session as `client_context` (see Concepts) and echoed in the reads above.
-  The **same payload** works over WebSocket at `wss://asgi.data.iblai.app/ws/chat/`.
+  `page_content` default to empty, `metadata` and `document_filter` to null. `metadata` is
+  soft passthrough — stored on the session as `client_context` (see Concepts) and echoed in
+  the reads above. `document_filter` is the hard retrieval scope — an inclusive per-key
+  allow-list over documents' ingested `custom_metadata`, applied only to this turn and never
+  persisted (see Concepts and Schema). The **same payload** works over WebSocket at
+  `wss://asgi.data.iblai.app/ws/chat/`.
 - **POST** `…/dm/api/ai-mentor/orgs/{org}/users/{user}/sessions/` — create/retrieve a
   session (`ChatSessionView`; the body's `mentor` field picks the agent). Or let the
   first chat turn create one by passing a new `session_id`.
@@ -106,12 +137,39 @@ curl "https://api.iblai.app/dm/api/ai-mentor/orgs/$IBLAI_ORG/users/$IBLAI_USERNA
 
 ## Schema
 
-**`metadata` / `client_context`** — an arbitrary JSON object (`dict[str, Any] | null`,
-`BaseConsumerPayload.metadata`). No fixed keys; use whatever your app needs, e.g.
+**`metadata` / `client_context`** (soft) — an arbitrary JSON object (`dict[str, Any] |
+null`, `BaseConsumerPayload.metadata`). No fixed keys; use whatever your app needs, e.g.
 `product`, `planTier`, `userRole`, `region`. Sent as `metadata` on a chat turn, it is
 persisted at `Session.metadata["client_context"]` and read back as `client_context` in
 the session-messages response, the history export (a `client_context` field per item, or
-CSV column via `?to_csv=true`), and analytics `summary.client_context`.
+CSV column via `?to_csv=true`), and analytics `summary.client_context`. It is appended to
+the prompt but never restricts retrieval.
+
+**`document_filter`** (hard) — an optional JSON object (`dict[str, str|int|float|bool] |
+null`, `BaseConsumerPayload.document_filter`) that scopes RAG retrieval to documents whose
+ingested `custom_metadata` is compatible with the filter. It never touches the prompt and
+is **not** persisted on the session (per-turn only).
+
+- **Keys** must be flat and alphanumeric/underscore (`^\w+$`) — no `__`, no ORM-style
+  lookup suffixes (`__icontains`, etc.). **Values** must be scalars (string, number, or
+  boolean); lists/objects/null are rejected. A malformed filter fails the turn with a
+  validation error rather than being silently ignored.
+- **Inclusive per key:** a document is kept if, for **every** filter key, it *matches the
+  value* **or** *does not carry that key*; it is excluded only when it carries the key with
+  a **different** value. Multiple keys are AND'd.
+- **Matching is exact** — value comparison is case- and type-sensitive (`"CA"` ≠ `"ca"`;
+  the integer `2026` ≠ the string `"2026"`), and keys are matched exactly (`"stateCode"` ≠
+  `"statecode"`); a key no document carries acts as a no-op for that key.
+- **State + generic pattern:** ingest generic/shared documents with **no** state key and
+  state-specific documents with `stateCode = <state>`; then `{"stateCode":"CA"}` retrieves
+  California **and** generic documents while excluding other states — no per-state agent or
+  two-stage retrieval needed. To search everything, send **no** `document_filter` (an empty
+  or fully non-matching filter can yield an empty candidate set, and the agent may then
+  answer without any retrieved context).
+- **Eligibility ≠ retrieval:** the filter only shrinks the candidate set; top-k similarity
+  ranking still runs, so an eligible document is not guaranteed to surface if higher-scoring
+  eligible documents fill the top-k. Raise the agent's retrieval `k` if broad generic
+  material is being crowded out.
 
 ## Reference material
 
@@ -119,5 +177,6 @@ CSV column via `?to_csv=true`), and analytics `summary.client_context`.
   `metadata` pass-through companion: the `<CONTEXT METADATA>` prompt-injection format,
   per-transport wire notes (SSE/WebSocket + the embedded-iframe `postMessage` channel),
   session caching (send-once, replace-not-merge, ~2h TTL), the
-  one-agent-many-contexts pattern, and the storage/pipeline map (session
-  `client_context` vs. the per-message snapshot).
+  one-agent-many-contexts pattern, the storage/pipeline map (session
+  `client_context` vs. the per-message snapshot), and the **soft `metadata` vs. hard
+  `document_filter`** comparison with the state-specific + generic retrieval pattern.

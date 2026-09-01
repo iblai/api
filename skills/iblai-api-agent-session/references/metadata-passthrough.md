@@ -7,6 +7,15 @@ prompt-injection format, the per-transport wire notes (incl. the iframe channel)
 the caching semantics. Auth is unchanged: `Authorization: Api-Token $IBLAI_API_KEY`,
 `{org}` = `$IBLAI_ORG`, `{user}` = `$IBLAI_USERNAME`.
 
+> **Scope: this file is about the *soft* `metadata` field only.** `metadata` steers how the
+> agent *reasons* (prompt context); it never restricts which documents RAG retrieves. If you
+> want to *scope retrieval* to a subset of documents — e.g. answer only from California
+> materials — that is the separate **hard** `document_filter` field, documented in
+> `SKILL.md` (`## Concepts`, `## Schema`). The two are independent and can be sent together.
+> A common mistake is putting a value like `stateCode` in `metadata` and expecting it to
+> filter documents; it will not — soft `metadata` only augments the prompt (see
+> "Soft vs. hard" below).
+
 ## The idea
 
 `metadata` is free-form JSON (no schema) you attach to a chat turn to tell one deployed
@@ -53,11 +62,13 @@ Same `metadata` field, same pipeline, every transport:
     type: 'MENTOR:CONTEXT_UPDATE',         // verbatim protocol constant
     hostInfo: { title: document.title, href: location.href },
     pageContent: bodyText,                  // → page_content
-    metadata: { productGroup: 'LICENSING', stateCode: 'CA' }
+    metadata: { productGroup: 'LICENSING' } // soft: prompt context, NOT a retrieval filter
   }, '*');
   ```
   Widget contract: listen for `type: 'MENTOR:CONTEXT_UPDATE'`, take `metadata`, include it
-  on every `/ws/chat/` send.
+  on every `/ws/chat/` send. Note: `metadata` here is **soft** — to scope retrieval by e.g.
+  `stateCode`, the widget must send a separate `document_filter` (hard) on the WS payload,
+  not fold it into `metadata`.
 
 ## Session semantics
 
@@ -95,3 +106,46 @@ gets Enterprise SSO steps with EU data-residency notes; the Payments page on Sta
 `{product:"Payments", planTier:"Starter"}`, and the *same* agent explains Starter
 integration and that SSO needs an upgrade. No per-surface agents, no prompt edits — just
 the metadata plus a system prompt that reads it.
+
+## Soft `metadata` vs. hard `document_filter`
+
+These are two different fields with two different jobs. Sending one does not do the other's
+work; you can send both on the same turn.
+
+| | `metadata` (soft) | `document_filter` (hard) |
+|---|---|---|
+| Affects | the **prompt** the agent reads | which **documents** RAG may retrieve |
+| Mechanism | `<CONTEXT METADATA>` block appended to the prompt | inclusive allow-list over docs' ingested `custom_metadata` |
+| Persistence | session-sticky, saved as `client_context` | per-turn only, never persisted, never in the prompt |
+| Value types | any JSON | scalars only (`str`/`int`/`float`/`bool`) |
+| Restricts retrieval? | **no** | **yes** |
+
+**Inclusive matching (the rule that makes generic material coexist with scoped material).**
+`document_filter` keeps a document when, for **every** filter key, the document either
+matches that key's value **or does not carry that key at all**; it drops a document only
+when it carries the key with a *different* value. Multiple keys are AND'd. So a document
+ingested **without** a given key is never excluded by a filter on that key.
+
+**State-specific + generic in one retrieval (e.g. an Insurance Explainer).** Say California
+students must get California materials for CA-specific questions *and* the generic Life &
+Health materials for general questions:
+
+1. Ingest generic materials with **no** `stateCode` in `custom_metadata`.
+2. Ingest state materials with `stateCode = "CA"`, `"NY"`, etc.
+3. On every turn send `document_filter: {"stateCode": "CA"}`.
+
+Result: California docs (match) **and** generic docs (lack the key → included) are eligible;
+other states (different value) are excluded — a single hard filter, no two-stage
+orchestration. Pitfalls to avoid:
+
+- Do **not** tag the generic materials with any `stateCode` — if they carry a state they'll
+  be excluded by a different-state filter, and general questions will lose them.
+- Do **not** use an empty value (`{"stateCode": ""}`) to mean "any state." Empty matches no
+  stored value and keeps only untagged docs; if every doc is tagged you get an **empty
+  candidate set**, and the agent may answer with no retrieved context. To search everything,
+  send **no** `document_filter` at all.
+- Matching is exact and case/type-sensitive: `"CA"` ≠ `"ca"`, and the integer `2026` ≠ the
+  string `"2026"`. Keep the filter value identical to what you ingested.
+- The filter only shrinks the candidate set; **top-k ranking still runs afterward**. If
+  generic material is eligible but not surfacing next to many state docs, raise the agent's
+  retrieval `k`.
