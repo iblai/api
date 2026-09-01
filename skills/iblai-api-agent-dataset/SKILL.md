@@ -68,15 +68,33 @@ feeding an agent knowledge.
       "type": "github"
     }
     ```
-- **PUT** `https://api.iblai.app/dm/api/ai-index/documents/{document_id}/` — **train / untrain + visibility**:
+  - **`custom_metadata`** (optional, works with **every** `type` above) — a flat JSON
+    object of tags stored on the document, later usable as a hard retrieval filter at chat
+    time via `document_filter` (see `/iblai-api-agent-session`). Send it as a nested object
+    on a JSON body, or — because `train/` is `multipart/form-data` — as a **JSON-encoded
+    string** form field:
+    ```json
+    { "custom_metadata": { "stateCode": "CA", "productGroup": "LICENSING", "year": 2026 } }
+    ```
+    Rules (rejected with a validation error otherwise): keys must be flat and
+    alphanumeric/underscore (`^\w+$`, no `__`); values must be scalars (string, number, or
+    boolean) — no nested objects, arrays, or `null`. Stored on the document as
+    `metadata.custom_metadata` and echoed back by the list endpoint above. Leave a tag
+    **off** documents that should be exempt from a filter on that key — a `document_filter`
+    only excludes documents that carry the key with a *different* value, so untagged/generic
+    material always survives (see `/iblai-api-agent-session ## Schema`).
+- **PUT** `https://api.iblai.app/dm/api/ai-index/documents/{document_id}/` — **train / untrain + visibility (+ retag)**:
   ```json
   {
     "pathway": "{mentor}",
     "url": "string",
     "train": "boolean",
-    "access": "public|private"
+    "access": "public|private",
+    "custom_metadata": { "stateCode": "CA" }
   }
   ```
+  `custom_metadata` here replaces the document's stored tags (same validation as `train/`);
+  omit it to leave existing tags unchanged.
 - **POST** `https://api.iblai.app/dm/api/ai-index/documents/{document_id}/settings/` — **set retrain schedule**:
   ```json
   {
@@ -96,6 +114,19 @@ curl -X POST \
   -F "type=youtube" \
   -F "pathway=$MENTOR" \
   -F "url=https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+```
+
+Upload a file tagged with `custom_metadata` (JSON-encoded string in the form field), so a
+chat turn can later scope retrieval to it with `document_filter: {"stateCode":"CA"}`:
+
+```bash
+curl -X POST \
+  "https://api.iblai.app/dm/api/ai-index/orgs/$IBLAI_ORG/users/$IBLAI_USERNAME/documents/train/" \
+  -H "Authorization: Api-Token $IBLAI_API_KEY" \
+  -F "type=file" \
+  -F "pathway=$MENTOR" \
+  -F "file=@ca-insurance-explainer.pdf" \
+  -F 'custom_metadata={"stateCode":"CA","productGroup":"LICENSING"}'
 ```
 
 ## Notes
