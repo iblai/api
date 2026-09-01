@@ -8,6 +8,13 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 - `iblai-api-agent-memory`: document the shared **agent knowledge** store (`MentorMemory`) — `GET`/`POST` `…/orgs/{org}/mentors/{mentor}/agent-memories/` and `PATCH`/`DELETE` `…/agent-memories/{memoryId}/` — org+agent-scoped, non-categorized memories injected into every user's chat with the agent.
 
+## [0.2.6] - 2026-09-01
+
+### Documentation
+
+- document custom_metadata tagging at ingestion
+- document hard document_filter alongside soft metadata
+
 ## [0.2.5] - 2026-08-29
 
 ### Documentation
