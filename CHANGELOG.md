@@ -7,6 +7,11 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 ### Added
 
 - `iblai-api-agent-memory`: document the shared **agent knowledge** store (`MentorMemory`) — `GET`/`POST` `…/orgs/{org}/mentors/{mentor}/agent-memories/` and `PATCH`/`DELETE` `…/agent-memories/{memoryId}/` — org+agent-scoped, non-categorized memories injected into every user's chat with the agent.
+- `iblai-api-analytics`: document the extended per-turn context now returned by the transcript detail endpoint (`GET /api/analytics/messages/details/`) — each AI turn in `messages[]` carries `documents`, `tool_calls`, `metadata`, and `request_context` alongside `human`/`ai`.
+
+### Documentation
+
+- `iblai-api-analytics`: note that the transcript list (`GET /api/analytics/messages/`) `search` now matches the learner's **email** (in addition to username and the first user message) and that each list row carries the learner's `email`.
 
 ## [0.2.6] - 2026-09-01
 
