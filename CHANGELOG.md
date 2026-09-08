@@ -13,6 +13,12 @@ All notable changes to the [ibl.ai API skills](https://github.com/iblai/api).
 
 - `iblai-api-analytics`: note that the transcript list (`GET /api/analytics/messages/`) `search` now matches the learner's **email** (in addition to username and the first user message) and that each list row carries the learner's `email`.
 
+## [0.2.8] - 2026-09-08
+
+### Documentation
+
+- document per-turn context + email on transcripts (#36)
+
 ## [0.2.7] - 2026-09-07
 
 ### Documentation
