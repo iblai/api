@@ -91,10 +91,17 @@ org-wide scope on every endpoint here.
 
 ### Transcripts
 
-- **GET** `{dm_url}/api/analytics/messages/?platform_key={platform}&search={user}&topic={topic}&sentiment={s}&min_messages=&max_messages=&page=1&limit=20[&mentor_unique_id={mentor}][&start_date=&end_date=]`
-  — transcript list (one row per session).
+- **GET** `{dm_url}/api/analytics/messages/?platform_key={platform}&search={q}&topic={topic}&sentiment={s}&min_messages=&max_messages=&page=1&limit=20[&mentor_unique_id={mentor}][&start_date=&end_date=]`
+  — transcript list (one row per session). `search` matches the learner's
+  **email** or username and the session's first user message. Each row carries
+  the learner's `email`.
 - **GET** `{dm_url}/api/analytics/messages/details/?platform_key={platform}&session_id={id}[&mentor_unique_id={mentor}]`
-  — one full transcript. `session_id` **required**.
+  — one full transcript. `session_id` **required**. Returns `summary` +
+  `messages[]`. Beyond `human`/`ai`, every AI turn carries the extended
+  per-turn context: `documents` (retrieved sources, normalized, or `null`),
+  `tool_calls` (`[{name, input, output}]`; `[]` when none), `metadata`
+  (`{client, llm_model, llm_provider, llm_temperature}`, or `null`), and
+  `request_context` (the credential-stripped request payload, or `null`).
 
 ### Content analytics (courses / programs / pathways / skills)
 
