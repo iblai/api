@@ -156,7 +156,7 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-inference` | Run inference via the OpenAI-compatible API — POST OpenAI-format messages to any `provider/model` (e.g. `openai/gpt-5`) for a completion, SSE stream, or tool calls; list models. Direct REST, no agent needed. |
 | `/iblai-api-agent-session` | Talk to a deployed agent directly over REST/SSE (or WebSocket) and manage chat sessions — POST a prompt with attached metadata (`client_context`), list/read sessions and history exports. Direct-transport counterpart to `agent-chat`. |
 | `/iblai-api-agent-support` | Human-support tickets escalated from agent chats — list/filter tickets, read the reply thread, respond, change status, close or delete |
-| `/iblai-api-org` | Org-wide settings — default agent, help center URL, chat width, feature toggles |
+| `/iblai-api-org` | Org-wide settings — default agent, help center URL, chat width, feature toggles; custom domains (attach a hostname, point it at an SPA, soft/hard delete) |
 | `/iblai-api-management` | Org admin — Users, Groups, Roles, Policies, Teams, Alerts |
 | `/iblai-api-rbac` | RBAC — roles, policies, groups, permission checks, agent/team sharing, student toggles |
 | `/iblai-api-crm` | CRM — people, organizations, pipelines, deals (move/won/lost), activities, tags |
