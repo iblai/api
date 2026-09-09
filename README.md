@@ -6,7 +6,7 @@
 
 Operate any ibl.ai organization from your AI agent. Skills + a chat MCP server.
 
-[![Skills](https://img.shields.io/badge/Skills-47-CC785C)](https://skills.sh/iblai/api)
+[![Skills](https://img.shields.io/badge/Skills-48-CC785C)](https://skills.sh/iblai/api)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-CC785C?logoColor=white)](https://claude.ai)
 [![Cursor](https://img.shields.io/badge/Cursor-000000)](https://cursor.com)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
@@ -104,7 +104,7 @@ After installing, use these directly in your AI agent with `/` commands.
 /iblai-api-integration     /iblai-api-notification
 /iblai-api-token          /iblai-api-invite
 /iblai-api-scim            /iblai-api-billing
-/iblai-api-feature
+/iblai-api-feature         /iblai-api-exim
 ```
 
 ### Profile
@@ -166,6 +166,7 @@ After installing, use these directly in your AI agent with `/` commands.
 | `/iblai-api-invite` | User invitations — list and send (single or CSV bulk) |
 | `/iblai-api-scim` | SCIM 2.0 directory provisioning — users (Enterprise extension), groups, departments, memberships; RBAC group assignment auto-links platforms |
 | `/iblai-api-billing` | Billing & credits — credit accounts, item paywalls, prices, checkout (auth + guest), subscriptions, access checks, revenue/subscriber reporting |
+| `/iblai-api-exim` | Export & import — start/poll whole-org migration runs, download the bundle `.zip` and upload it to another deployment; course export eligibility, Studio target environments, task queue |
 | `/iblai-api-feature` | Per-user feature config & flags — get/update (inline or feature+values), bulk-config, apps/onboarding, trial activation, platform provisioning |
 | `/iblai-api-profile` | The signed-in user's own profile — Basic, Social, Education, Experience, Resume, Memory |
 | `/iblai-api-profile-metadata` | Per-user, per-org metadata key-value store — preferences, settings, feature flags |
